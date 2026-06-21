@@ -38,10 +38,10 @@ const T = {
     lips_tts:   'Sila tunjukkan bibir anda dengan mulut tertutup secara rileks.',
     skin_tts:   'Sila tunjukkan pipi dan dahi untuk imbasan tekstur kulit.',
     // Eye sequence voice
-    lookUp:       'Lihat ATAS',
-    lookDown:     'Lihat BAWAH',
-    lookLeft:     'Lihat KIRI',
-    lookRight:    'Lihat KANAN',
+    lookUp:      'Lihat ATAS',
+    lookDown:    'Lihat BAWAH',
+    lookLeft:    'Lihat KIRI',
+    lookRight:   'Lihat KANAN',
     eyeSeqReady: 'Urutan selesai! Sedia untuk tangkap.',
     eyeSeqHint:  'Urutan mata akan bermula secara automatik...',
     // Buttons
@@ -88,6 +88,12 @@ const T = {
     demoNoApi:       'Tiada sambungan API',
     demoRandom:      'Memilih keadaan rawak...',
     demoDone:        'Selesai (Demo) ✅',
+    // Processing — inline check strings
+    imagesRecorded:     'imej dirakam',
+    condDetected:       'keadaan kesihatan dikesan',
+    aiConfidence:       'Keyakinan AI',
+    errorPrefix:        'Ralat',
+    analysisError:      'Ralat semasa analisis',
     // Results
     resultsTitle: 'Keputusan Analisis',
     scanDone:     'Imbasan 6-Langkah Selesai',
@@ -96,6 +102,27 @@ const T = {
     tongueTcm:    'Lidah TCM:',
     noBadges:     'Tiada tanda klinikal ketara dikesan',
     demoNotice:   'Demo mode — tiada analisis AI sebenar digunakan',
+    // Results — dynamic count strings (use {n} placeholder, replaced in code)
+    scansOf6:       'daripada 6 imbasan berjaya dirakam.',
+    conditionsFound: 'keadaan dikesan.',
+    timeframeLabel:  'Cadangan masa tindakan:',
+    // Action levels (EN override — BM comes from health-data.json actionLevels)
+    action_critical_msg:  'KECEMASAN! Segera dapatkan rawatan perubatan!',
+    action_critical_time: 'Segera/Sekarang',
+    action_high_msg:      'Serius! Jumpa doktor secepat mungkin',
+    action_high_time:     'Dalam 1-3 hari',
+    action_medium_msg:    'Perlu perhatian. Pertimbangkan untuk check-up',
+    action_medium_time:   'Dalam 1-2 minggu',
+    action_low_msg:       'Perubahan gaya hidup disyorkan',
+    action_low_time:      'Pemerhatian berterusan',
+    // Daily tips (BM comes from health-data.json; this is the i18n copy for EN override)
+    dailyTips: [
+      'Tidur 7-9 jam',
+      'Minum air 2-3 liter',
+      'Makan sayur & buah',
+      'Exercise 30 minit',
+      'Check muka dalam cermin',
+    ],
     // Condition card
     tcmHeader:    'Diagnosis TCM',
     tcmFaceMap:   'Diagnosis TCM – Peta Muka',
@@ -120,7 +147,7 @@ const T = {
     // Face map section
     faceMapTitle: 'Peta Muka TCM',
     faceMapSub:   'Setiap kawasan muka berkait dengan organ dalaman',
-    // Daily & disclaimer
+    // Daily & disclaimer titles
     dailyTitle:      'Rutin Harian Disyorkan',
     disclaimerTitle: 'Penafian Perubatan',
     // Severity
@@ -147,6 +174,7 @@ const T = {
     svgRightCheek: 'PIPI KANAN',
     svgRotate:     'Putar muka ke kiri dan kanan',
   },
+
   en: {
     // App
     appSub: 'TCM & Modern Medicine',
@@ -230,6 +258,12 @@ const T = {
     demoNoApi:       'No API connection',
     demoRandom:      'Selecting random conditions...',
     demoDone:        'Done (Demo) ✅',
+    // Processing — inline check strings
+    imagesRecorded:  'images recorded',
+    condDetected:    'health conditions detected',
+    aiConfidence:    'AI Confidence',
+    errorPrefix:     'Error',
+    analysisError:   'Analysis error',
     // Results
     resultsTitle: 'Analysis Results',
     scanDone:     '6-Step Scan Complete',
@@ -238,6 +272,27 @@ const T = {
     tongueTcm:    'TCM Tongue:',
     noBadges:     'No significant clinical signs detected',
     demoNotice:   'Demo mode — no real AI analysis used',
+    // Results — dynamic count strings
+    scansOf6:        'of 6 scans recorded.',
+    conditionsFound: 'conditions detected.',
+    timeframeLabel:  'Recommended timeframe:',
+    // Action levels (EN)
+    action_critical_msg:  'EMERGENCY! Seek medical treatment immediately!',
+    action_critical_time: 'Immediately / Now',
+    action_high_msg:      'Serious! See a doctor as soon as possible',
+    action_high_time:     'Within 1-3 days',
+    action_medium_msg:    'Attention needed. Consider getting a check-up',
+    action_medium_time:   'Within 1-2 weeks',
+    action_low_msg:       'Lifestyle changes recommended',
+    action_low_time:      'Ongoing monitoring',
+    // Daily tips (EN)
+    dailyTips: [
+      'Sleep 7-9 hours',
+      'Drink 2-3 litres of water',
+      'Eat vegetables & fruits',
+      'Exercise 30 minutes',
+      'Check your face in the mirror',
+    ],
     // Condition card
     tcmHeader:    'TCM Diagnosis',
     tcmFaceMap:   'TCM Diagnosis – Face Map',
@@ -262,7 +317,7 @@ const T = {
     // Face map section
     faceMapTitle: 'TCM Face Map',
     faceMapSub:   'Each facial zone corresponds to an internal organ',
-    // Daily & disclaimer
+    // Daily & disclaimer titles
     dailyTitle:      'Recommended Daily Routine',
     disclaimerTitle: 'Medical Disclaimer',
     // Severity

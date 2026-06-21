@@ -2,10 +2,15 @@ import { router } from '../main.js'
 import healthData from '../../health-data.json'
 import { t, getLang, setLang } from '../i18n.js'
 
-const ACTION    = healthData.actionLevels
-const FACE_MAP  = healthData.faceMapping.tcm
-const DAILY     = healthData.generalRecommendations.daily
-const DISCLAIMER = healthData.disclaimer.ms
+const ACTION   = healthData.actionLevels
+const FACE_MAP = healthData.faceMapping.tcm
+
+// Bilingual helpers (re-evaluated on each render so they pick up lang changes)
+const getDaily      = () => t('dailyTips')          // i18n.js holds EN; BM array is same
+const getDisclaimer = () => healthData.disclaimer[getLang() === 'bm' ? 'ms' : 'en']
+// Action level text — i18n.js has both BM and EN copies keyed as action_<sev>_msg/time
+const getActMsg  = (sev) => t(`action_${sev}_msg`)
+const getActTime = (sev) => t(`action_${sev}_time`)
 
 // Module-level — needed by language toggle to re-render without losing data
 let _appContainer = null
@@ -107,8 +112,8 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
               </div>
               <div class="flex-1 pt-1 min-w-0">
                 <p class="text-white font-semibold text-sm">${t('scanDone')}</p>
-                <p class="text-slate-400 text-xs mt-1">${lang === 'bm' ? `${scanEntries.length} daripada 6 imbasan berjaya dirakam.` : `${scanEntries.length} of 6 scans recorded.`}</p>
-                <p class="text-slate-400 text-xs mt-1">${lang === 'bm' ? `${detected.length} keadaan dikesan.` : `${detected.length} conditions detected.`}</p>
+                <p class="text-slate-400 text-xs mt-1">${scanEntries.length} ${t('scansOf6')}</p>
+                <p class="text-slate-400 text-xs mt-1">${detected.length} ${t('conditionsFound')}</p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
                   ${detected.map(c => {
                     const cs   = SEV[c.severity]
@@ -140,8 +145,8 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
           <div class="rounded-2xl p-4 border ${s.urgentBg} flex gap-3 items-start slide-up">
             <span class="text-2xl shrink-0">${act.icon}</span>
             <div>
-              <p class="font-bold text-sm ${s.urgentText}">${act.message}</p>
-              <p class="text-xs text-slate-400 mt-0.5">${lang === 'bm' ? 'Cadangan masa tindakan:' : 'Recommended timeframe:'} <strong class="text-slate-300">${act.timeframe}</strong></p>
+              <p class="font-bold text-sm ${s.urgentText}">${getActMsg(topSev)}</p>
+              <p class="text-xs text-slate-400 mt-0.5">${t('timeframeLabel')} <strong class="text-slate-300">${getActTime(topSev)}</strong></p>
             </div>
           </div>
 
@@ -192,7 +197,7 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
               <span class="text-lg shrink-0 mt-0.5">⚕️</span>
               <div>
                 <p class="text-slate-300 text-sm font-semibold mb-1.5">${t('disclaimerTitle')}</p>
-                <p class="text-slate-500 text-xs leading-relaxed">${DISCLAIMER}</p>
+                <p class="text-slate-500 text-xs leading-relaxed">${getDisclaimer()}</p>
               </div>
             </div>
           </div>
@@ -280,8 +285,8 @@ function renderConditionCard(c, i, SEV) {
 
         <div class="px-4 py-3 flex items-center gap-2 ${s.urgentBg}">
           <span class="text-sm">${act.icon}</span>
-          <p class="text-xs font-medium ${s.urgentText} flex-1">${act.message}</p>
-          <span class="text-xs text-slate-500 shrink-0">${act.timeframe}</span>
+          <p class="text-xs font-medium ${s.urgentText} flex-1">${getActMsg(c.severity)}</p>
+          <span class="text-xs text-slate-500 shrink-0">${getActTime(c.severity)}</span>
         </div>
 
         ${renderTcmSection(c)}
@@ -560,7 +565,7 @@ function renderDailySection() {
         <p class="text-sm font-semibold text-slate-200">${t('dailyTitle')}</p>
       </div>
       <ul class="flex flex-col gap-2">
-        ${DAILY.map(d => `
+        ${getDaily().map(d => `
         <li class="flex gap-2 items-center">
           <span class="text-green-400 text-xs shrink-0">✓</span>
           <span class="text-xs text-slate-300">${d}</span>

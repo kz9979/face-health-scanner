@@ -8,7 +8,8 @@ let step      = 0
 let scanData  = {}
 let captured  = {}
 let direction = 'forward'
-let _appContainer = null  // for language-toggle re-render
+let _appContainer    = null  // for language-toggle re-render
+let _prevSpokenStep  = -1    // guard: prevents speak() firing twice for the same step
 
 // ── Step config (rebuilt on each call so translations are current) ────────────
 function getSteps() {
@@ -36,7 +37,8 @@ const ALL_CONDITIONS = flattenConditions()
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 export function renderScanner(container) {
-  _appContainer = container
+  _appContainer   = container
+  _prevSpokenStep = -1   // reset so step 0 auto-speaks on each new scan session
   stopStream()
   step      = 0
   scanData  = {}
@@ -280,8 +282,11 @@ function renderStep(container) {
     setTimeout(runEyeSequence, 1200)
   }
 
-  // Auto-speak step instruction (slight delay so camera noise settles)
-  setTimeout(() => speak(s.tts), 600)
+  // Auto-speak — only once per step; re-renders of the same step (capture/retake/lang toggle) are silent
+  if (_prevSpokenStep !== step) {
+    _prevSpokenStep = step
+    setTimeout(() => speak(s.tts), 600)
+  }
 }
 
 // ── SVG Overlays (with i18n text) ─────────────────────────────────────────────
@@ -711,7 +716,7 @@ async function runProcessing() {
   try {
     setProgress(t('prep'), 10, t('prepSub'))
     await delay(400)
-    addCheckItem(`${imgCount} ${getLang() === 'bm' ? 'imej dirakam' : 'images recorded'} ✓`)
+    addCheckItem(`${imgCount} ${t('imagesRecorded')} ✓`)
 
     setProgress(t('sending'), 25, t('procSubLabel'))
     await delay(300)
@@ -732,11 +737,11 @@ async function runProcessing() {
     setProgress(t('mapping'), 78, '')
     await delay(500)
     const detected = mapToConditions(geminiResult, ALL_CONDITIONS)
-    addCheckItem(`${detected.length} ${getLang() === 'bm' ? 'keadaan kesihatan dikesan' : 'health conditions detected'} ✓`)
+    addCheckItem(`${detected.length} ${t('condDetected')} ✓`)
 
     setProgress(t('compiling'), 92, t('almostDone'))
     await delay(500)
-    addCheckItem(`${getLang() === 'bm' ? 'Keyakinan AI' : 'AI Confidence'}: ${Math.round((geminiResult.confidence ?? 0.8) * 100)}% ✓`)
+    addCheckItem(`${t('aiConfidence')}: ${Math.round((geminiResult.confidence ?? 0.8) * 100)}% ✓`)
 
     setProgress(t('analysisDone'), 100, t('openingReport'))
     await delay(700)
@@ -746,8 +751,8 @@ async function runProcessing() {
 
   } catch (err) {
     console.error('[Gemini]', err)
-    addCheckItem(`${getLang() === 'bm' ? 'Ralat' : 'Error'}: ${err.message}`, false)
-    setProgress(getLang() === 'bm' ? 'Ralat semasa analisis' : 'Analysis error', 0, '')
+    addCheckItem(`${t('errorPrefix')}: ${err.message}`, false)
+    setProgress(t('analysisError'), 0, '')
     showError(err.message)
   }
 }
