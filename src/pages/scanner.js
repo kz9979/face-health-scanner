@@ -1,0 +1,793 @@
+import { router } from '../main.js'
+import healthData from '../../health-data.json'
+import { t, getLang, setLang } from '../i18n.js'
+
+// ── Module-level state ─────────────────────────────────────────────────────────
+let stream    = null
+let step      = 0
+let scanData  = {}
+let captured  = {}
+let direction = 'forward'
+let _appContainer = null  // for language-toggle re-render
+
+// ── Step config (rebuilt on each call so translations are current) ────────────
+function getSteps() {
+  const lang = getLang()
+  const lbl  = (n) => `${t('step')} ${n} / 6`
+  return [
+    { key: 'face',   emoji: '👤', title: t('face_title'),   label: lbl(1), inst: t('face_inst'),   tip: t('face_tip'),   btn: t('btnNext'),    overlay: 'face',   tts: t('face_tts')   },
+    { key: 'eyes',   emoji: '👁️', title: t('eyes_title'),   label: lbl(2), inst: t('eyes_inst'),   tip: t('eyes_tip'),   btn: t('btnNext'),    overlay: 'eyes',   tts: t('eyes_tts')   },
+    { key: 'sclera', emoji: '🔍', title: t('sclera_title'), label: lbl(3), inst: t('sclera_inst'), tip: t('sclera_tip'), btn: t('btnNext'),    overlay: 'sclera', tts: t('sclera_tts') },
+    { key: 'tongue', emoji: '👅', title: t('tongue_title'), label: lbl(4), inst: t('tongue_inst'), tip: t('tongue_tip'), btn: t('btnNext'),    overlay: 'tongue', tts: t('tongue_tts') },
+    { key: 'lips',   emoji: '💋', title: t('lips_title'),   label: lbl(5), inst: t('lips_inst'),   tip: t('lips_tip'),   btn: t('btnNext'),    overlay: 'lips',   tts: t('lips_tts')   },
+    { key: 'skin',   emoji: '✨', title: t('skin_title'),   label: lbl(6), inst: t('skin_inst'),   tip: t('skin_tip'),   btn: t('btnAnalyze'), overlay: 'skin',   tts: t('skin_tts')   },
+  ]
+}
+
+function flattenConditions() {
+  const out = []
+  const cats = healthData.healthConditions
+  for (const k of Object.keys(cats))
+    for (const c of Object.keys(cats[k]))
+      out.push(cats[k][c])
+  return out
+}
+const ALL_CONDITIONS = flattenConditions()
+
+// ── Entry point ───────────────────────────────────────────────────────────────
+export function renderScanner(container) {
+  _appContainer = container
+  stopStream()
+  step      = 0
+  scanData  = {}
+  captured  = {}
+  direction = 'forward'
+  renderStep(container)
+}
+
+// ── Render current wizard step ────────────────────────────────────────────────
+function renderStep(container) {
+  _appContainer = container
+  const STEPS = getSteps()
+  const s   = STEPS[step]
+  const pct = Math.round((step / STEPS.length) * 100)
+  const cap = captured[s.key]
+
+  const animClass = direction === 'forward' ? 'slide-from-right' : 'slide-from-left'
+  const isScleraUncaptured = (s.key === 'sclera' && !cap)
+
+  container.innerHTML = `
+    <div class="flex flex-col min-h-dvh bg-gradient-to-b from-[#0f0f1a] to-[#0d1a2e] ${animClass}">
+
+      <!-- Header -->
+      <header class="px-4 pt-4 pb-3 flex flex-col gap-2.5 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shrink-0 shadow shadow-cyan-500/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-slate-500 font-medium">${s.label}</p>
+            <p class="text-sm font-bold text-white leading-tight truncate">${s.emoji} ${s.title}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="tts-btn" title="${t('listenBtn')}"
+              class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors active:scale-90">
+              🔊
+            </button>
+            <button id="lang-toggle"
+              class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors active:scale-90 border border-slate-700/50">
+              ${t('langBtn')}
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="relative h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+               style="width:${pct}%"></div>
+        </div>
+
+        <!-- Step dots -->
+        <div class="flex gap-1.5 justify-center">
+          ${STEPS.map((_, i) => `
+            <div class="rounded-full transition-all duration-300
+                        ${i < step  ? 'w-5 h-2 bg-green-500' :
+                          i === step ? 'w-6 h-2 bg-cyan-400' :
+                                       'w-2 h-2 bg-slate-700'}">
+            </div>`).join('')}
+        </div>
+      </header>
+
+      <!-- Camera viewfinder -->
+      <main class="flex-1 flex flex-col items-center px-4 pt-3 pb-4 gap-3 overflow-y-auto">
+
+        <div class="relative w-full max-w-sm shrink-0">
+          <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/15 to-blue-600/15 blur-xl -z-10"></div>
+          <div id="viewfinder" class="relative rounded-3xl overflow-hidden border-2 ${cap ? 'border-green-500/60' : 'border-cyan-500/40'} bg-[#111827] shadow-2xl" style="aspect-ratio:3/4;">
+
+            <video id="camera-video" class="absolute inset-0 w-full h-full object-cover ${cap ? 'opacity-30' : ''}"
+                   autoplay playsinline muted></video>
+
+            ${cap ? `<img src="${scanData[s.key]?.image}" class="absolute inset-0 w-full h-full object-cover" alt="Captured"/>` : ''}
+
+            <canvas id="capture-canvas" class="hidden"></canvas>
+
+            <!-- SVG Guide overlay -->
+            <div class="absolute inset-0 pointer-events-none">
+              ${getOverlaySVG(s.overlay, cap)}
+            </div>
+
+            <!-- Flash overlay -->
+            <div id="capture-flash" class="hidden absolute inset-0 bg-white rounded-3xl pointer-events-none" style="opacity:0"></div>
+
+            <!-- Countdown overlay -->
+            <div id="countdown-overlay" class="hidden absolute inset-0 flex items-center justify-center bg-[#0f0f1a]/70">
+              <div class="relative w-28 h-28">
+                <svg class="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="7"/>
+                  <circle id="cd-circle" cx="50" cy="50" r="44" fill="none"
+                          stroke="#22d3ee" stroke-width="7" stroke-linecap="round"
+                          stroke-dasharray="276.46" stroke-dashoffset="0"
+                          style="transition: stroke-dashoffset 0.95s linear"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span id="cd-num" class="text-6xl font-black text-white" style="text-shadow:0 0 20px rgba(34,211,238,0.8)">3</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Captured badge -->
+            ${cap ? `
+            <div class="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
+              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/90 backdrop-blur-sm shadow-lg check-pop">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-xs text-white font-bold">${t('captured')}</span>
+              </div>
+            </div>` : ''}
+
+            <!-- Camera loading -->
+            <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-3 ${cap ? 'hidden' : ''}">
+              <div class="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent analyzing-spinner"></div>
+              <p class="text-slate-400 text-xs">${t('cameraLoading')}</p>
+            </div>
+
+            <!-- Camera denied -->
+            <div id="camera-denied" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-[#111827]">
+              <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+                </svg>
+              </div>
+              <p class="text-slate-300 text-xs font-semibold">${t('cameraDenied')}</p>
+              <p class="text-slate-500 text-xs">${t('cameraDeniedSub')}</p>
+              <button id="retry-camera" class="px-4 py-2 text-xs font-bold rounded-full bg-cyan-600 text-white active:scale-95">${t('btnRetryCamera')}</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Instruction card -->
+        <div class="w-full max-w-sm rounded-2xl bg-slate-800/60 border border-slate-700/40 p-4 flex flex-col gap-2">
+          <p class="text-white text-sm font-semibold leading-snug">${s.inst}</p>
+          <div class="flex items-start gap-2">
+            <span class="text-cyan-400 text-xs shrink-0 mt-0.5">💡</span>
+            <p class="text-slate-400 text-xs leading-relaxed">${s.tip}</p>
+          </div>
+          ${cap ? `
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-slate-700/40">
+            <span class="text-green-400 text-sm">✅</span>
+            <span class="text-xs font-medium text-green-400">${t('stepDone')}</span>
+          </div>` : ''}
+          ${isScleraUncaptured ? `
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-slate-700/40">
+            <div class="w-3.5 h-3.5 rounded-full border-2 border-cyan-400 border-t-transparent analyzing-spinner shrink-0"></div>
+            <p id="eye-seq-label" class="text-cyan-400 text-xs font-medium">${t('eyeSeqHint')}</p>
+          </div>` : ''}
+        </div>
+
+        <!-- Action buttons -->
+        <div class="w-full max-w-sm flex flex-col gap-2.5 mt-auto">
+
+          ${cap ? `
+          <div class="flex gap-3">
+            <button id="retake-btn"
+              class="flex-1 py-3.5 rounded-2xl font-semibold text-sm text-slate-300
+                     bg-slate-800 border border-slate-600/50 active:scale-95 transition-all
+                     flex items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              ${t('btnRetake')}
+            </button>
+            <button id="next-btn"
+              class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white
+                     bg-gradient-to-r from-cyan-500 to-blue-600
+                     shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                     flex items-center justify-center gap-2">
+              ${s.btn}
+            </button>
+          </div>` : `
+          <button id="capture-btn" ${isScleraUncaptured ? 'disabled' : 'disabled'}
+            class="w-full py-4 rounded-2xl font-bold text-base text-white
+                   bg-gradient-to-r from-cyan-500 to-blue-600
+                   shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                   disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
+                   flex items-center justify-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
+            ${t('btnScan')}
+          </button>`}
+
+          <div class="flex gap-3">
+            ${step > 0 ? `
+            <button id="back-btn"
+              class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-400
+                     bg-slate-800/60 border border-slate-700/40 active:scale-95 transition-all
+                     flex items-center justify-center gap-1">
+              ${t('btnBack')}
+            </button>` : '<div class="flex-1"></div>'}
+            <button id="skip-btn"
+              class="flex-1 py-2.5 rounded-xl text-xs font-medium text-slate-500
+                     bg-slate-800/30 border border-slate-700/20 active:scale-95 transition-all">
+              ${t('btnSkip')}
+            </button>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  `
+
+  // Attach camera stream (or init)
+  if (stream) {
+    const vid = document.getElementById('camera-video')
+    if (vid) {
+      vid.srcObject = stream
+      vid.play().catch(() => {})
+      document.getElementById('camera-loading')?.classList.add('hidden')
+      if (!isScleraUncaptured) enableCaptureBtn()
+    }
+  } else {
+    initCamera()
+  }
+
+  // Wire events
+  document.getElementById('tts-btn')?.addEventListener('click', () => speak(s.tts))
+  document.getElementById('retry-camera')?.addEventListener('click', initCamera)
+  document.getElementById('back-btn')?.addEventListener('click', handleBack)
+  document.getElementById('skip-btn')?.addEventListener('click', handleSkip)
+  document.getElementById('lang-toggle')?.addEventListener('click', () => {
+    setLang(getLang() === 'bm' ? 'en' : 'bm')
+    renderStep(container)
+  })
+
+  if (cap) {
+    document.getElementById('retake-btn')?.addEventListener('click', handleRetake)
+    document.getElementById('next-btn')?.addEventListener('click', handleNext)
+  } else {
+    document.getElementById('capture-btn')?.addEventListener('click', handleCaptureClick)
+  }
+
+  // Eye movement sequence for sclera step
+  if (isScleraUncaptured) {
+    setTimeout(runEyeSequence, 1200)
+  }
+
+  // Auto-speak step instruction (slight delay so camera noise settles)
+  setTimeout(() => speak(s.tts), 600)
+}
+
+// ── SVG Overlays (with i18n text) ─────────────────────────────────────────────
+function getOverlaySVG(type, isCaptured) {
+  const dim = isCaptured ? '0.35' : '1'
+
+  const svg = (content) =>
+    `<svg class="absolute inset-0 w-full h-full" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" style="opacity:${dim}">${content}</svg>`
+
+  switch (type) {
+    case 'face': return svg(`
+      <defs>
+        <mask id="fm">
+          <rect width="300" height="400" fill="white"/>
+          <ellipse cx="150" cy="175" rx="115" ry="148" fill="black"/>
+        </mask>
+      </defs>
+      <rect width="300" height="400" fill="rgba(0,0,0,0.45)" mask="url(#fm)"/>
+      <ellipse cx="150" cy="175" rx="115" ry="148" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-dasharray="12 5"/>
+      <line x1="35" y1="27" x2="55" y2="27" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="27" x2="35" y2="47" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="27" x2="245" y2="27" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="27" x2="265" y2="47" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="373" x2="55" y2="373" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="373" x2="35" y2="353" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="373" x2="245" y2="373" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="373" x2="265" y2="353" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="150" cy="175" r="4" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
+      <line x1="140" y1="175" x2="130" y2="175" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
+      <line x1="160" y1="175" x2="170" y2="175" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
+      <line x1="150" y1="165" x2="150" y2="155" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
+      <line x1="150" y1="185" x2="150" y2="195" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
+    `)
+
+    case 'eyes': return svg(`
+      <rect width="300" height="400" fill="rgba(0,0,0,0.4)"/>
+      <ellipse cx="90" cy="170" rx="70" ry="38" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8 4"/>
+      <ellipse cx="210" cy="170" rx="70" ry="38" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8 4"/>
+      <text x="90" y="120" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui" font-weight="600">${t('svgLeft')}</text>
+      <text x="210" y="120" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui" font-weight="600">${t('svgRight')}</text>
+      <line x1="10" y1="170" x2="290" y2="170" stroke="#22d3ee" stroke-width="0.8" opacity="0.35" stroke-dasharray="4 3"/>
+      <circle cx="90" cy="170" r="18" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6"/>
+      <circle cx="210" cy="170" r="18" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6"/>
+    `)
+
+    case 'sclera': return svg(`
+      <rect width="300" height="400" fill="rgba(0,0,0,0.4)"/>
+      <path d="M20,175 Q150,60 280,175 Q150,290 20,175 Z" fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="2"/>
+      <!-- Arrows — IDs used by runEyeSequence() for highlighting -->
+      <text id="arrow-up"    x="150" y="50"  text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">↑</text>
+      <text id="arrow-down"  x="150" y="362" text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">↓</text>
+      <text id="arrow-left"  x="22"  y="183" text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">←</text>
+      <text id="arrow-right" x="278" y="183" text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">→</text>
+      <!-- Direction labels -->
+      <text x="150" y="75"  text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui">${t('svgUp')}</text>
+      <text x="150" y="337" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui">${t('svgDown')}</text>
+      <text x="40"  y="200" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui">${t('svgLeft').charAt(0)}${t('svgLeft').slice(1).toLowerCase()}</text>
+      <text x="260" y="200" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui">${t('svgRight').charAt(0)}${t('svgRight').slice(1).toLowerCase()}</text>
+      <circle cx="150" cy="175" r="22" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 3"/>
+    `)
+
+    case 'tongue': return svg(`
+      <rect width="300" height="400" fill="rgba(0,0,0,0.42)"/>
+      <path d="M75,195 Q150,165 225,195" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+      <path d="M75,195 Q110,230 150,235 Q190,230 225,195" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+      <ellipse cx="150" cy="290" rx="68" ry="62" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="2" stroke-dasharray="10 5"/>
+      <text x="150" y="385" text-anchor="middle" fill="#ef4444" font-size="11" font-family="system-ui" font-weight="600">${t('svgTongue')}</text>
+      <circle cx="150" cy="285" r="6" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+    `)
+
+    case 'lips': return svg(`
+      <rect width="300" height="400" fill="rgba(0,0,0,0.42)"/>
+      <path d="M70,185 Q100,165 125,178 Q150,165 175,178 Q200,165 230,185 Q200,202 150,207 Q100,202 70,185 Z"
+            fill="rgba(239,68,68,0.08)" stroke="#22d3ee" stroke-width="2.2"/>
+      <path d="M70,185 Q110,230 150,237 Q190,230 230,185 Q200,202 150,207 Q100,202 70,185 Z"
+            fill="rgba(239,68,68,0.06)" stroke="#22d3ee" stroke-width="2" opacity="0.8"/>
+      <path d="M115,172 Q130,163 145,170" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.5"/>
+      <path d="M185,172 Q170,163 155,170" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.5"/>
+      <text x="150" y="140" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui">${t('svgLipsLabel')}</text>
+    `)
+
+    case 'skin': return svg(`
+      <rect width="300" height="400" fill="rgba(0,0,0,0.32)"/>
+      <rect x="70" y="28" width="160" height="70" rx="8"
+            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="150" y="22" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui" font-weight="600">${t('svgForehead')}</text>
+      <rect x="16" y="155" width="90" height="105" rx="8"
+            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="61" y="148" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="system-ui" font-weight="600">${t('svgLeftCheek')}</text>
+      <rect x="194" y="155" width="90" height="105" rx="8"
+            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="239" y="148" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="system-ui" font-weight="600">${t('svgRightCheek')}</text>
+      <rect x="122" y="115" width="56" height="115" rx="6"
+            fill="rgba(251,191,36,0.04)" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.7"/>
+      <text x="150" y="342" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui">${t('svgRotate')}</text>
+    `)
+
+    default: return ''
+  }
+}
+
+// ── Eye movement sequence (Step 3) ────────────────────────────────────────────
+async function runEyeSequence() {
+  const DIRS = [
+    { id: 'arrow-up',    prompt: t('lookUp')    },
+    { id: 'arrow-down',  prompt: t('lookDown')  },
+    { id: 'arrow-left',  prompt: t('lookLeft')  },
+    { id: 'arrow-right', prompt: t('lookRight') },
+  ]
+
+  const seqLabel = document.getElementById('eye-seq-label')
+  const allArrows = ['arrow-up', 'arrow-down', 'arrow-left', 'arrow-right']
+
+  for (const dir of DIRS) {
+    // Highlight current arrow, dim others
+    allArrows.forEach(id => {
+      const el = document.getElementById(id)
+      if (el) el.setAttribute('opacity', id === dir.id ? '1' : '0.15')
+    })
+    if (seqLabel) seqLabel.textContent = dir.prompt
+    speak(dir.prompt)
+    vibrate([30])
+    await delay(2400)
+  }
+
+  // Reset all arrows to full opacity
+  allArrows.forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.setAttribute('opacity', '0.9')
+  })
+
+  if (seqLabel) seqLabel.textContent = t('eyeSeqReady')
+  vibrate([40, 30, 40])
+  speak(t('eyeSeqReady'))
+
+  // Sequence done — enable capture button (camera must also be ready)
+  const captureBtn = document.getElementById('capture-btn')
+  if (captureBtn) {
+    captureBtn.disabled = false
+    captureBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'scale-100')
+  }
+}
+
+// ── Camera ────────────────────────────────────────────────────────────────────
+async function initCamera() {
+  const vid     = document.getElementById('camera-video')
+  const loading = document.getElementById('camera-loading')
+  const denied  = document.getElementById('camera-denied')
+  const btn     = document.getElementById('capture-btn')
+
+  if (loading) loading.classList.remove('hidden')
+  if (denied)  denied.classList.add('hidden')
+  if (btn)     btn.disabled = true
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false,
+    })
+    if (vid) { vid.srcObject = stream; await vid.play() }
+    if (loading) loading.classList.add('hidden')
+    // Only auto-enable if not the sclera sequence step
+    const STEPS = getSteps()
+    if (STEPS[step].key !== 'sclera' || captured[STEPS[step].key]) enableCaptureBtn()
+  } catch {
+    if (loading) loading.classList.add('hidden')
+    if (denied)  denied.classList.remove('hidden')
+  }
+}
+
+function stopStream() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null }
+}
+
+function enableCaptureBtn() {
+  const btn = document.getElementById('capture-btn')
+  if (btn) btn.disabled = false
+}
+
+// ── Capture ───────────────────────────────────────────────────────────────────
+async function handleCaptureClick() {
+  const btn = document.getElementById('capture-btn')
+  if (btn) btn.disabled = true
+
+  await runCountdown()
+
+  const vid    = document.getElementById('camera-video')
+  const canvas = document.getElementById('capture-canvas')
+  if (!vid || !canvas) return
+
+  canvas.width  = vid.videoWidth  || 640
+  canvas.height = vid.videoHeight || 480
+  canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height)
+  const image = canvas.toDataURL('image/jpeg', 0.88)
+
+  flashCapture()
+  vibrate([60, 40, 60])
+
+  const STEPS = getSteps()
+  const key = STEPS[step].key
+  scanData[key] = { image, timestamp: Date.now() }
+  captured[key] = true
+
+  direction = 'forward'
+  renderStep(document.getElementById('app'))
+}
+
+async function runCountdown() {
+  const overlay = document.getElementById('countdown-overlay')
+  const numEl   = document.getElementById('cd-num')
+  const circle  = document.getElementById('cd-circle')
+  if (!overlay) return
+
+  overlay.classList.remove('hidden')
+  circle.style.transition = 'none'
+  circle.style.strokeDashoffset = '0'
+
+  for (let i = 3; i >= 1; i--) {
+    await delay(20)
+    numEl.textContent = i
+    circle.style.transition = 'stroke-dashoffset 0.92s linear'
+    circle.style.strokeDashoffset = String(92 * (3 - i + 1))
+    vibrate([25])
+    await delay(980)
+  }
+
+  overlay.classList.add('hidden')
+}
+
+function flashCapture() {
+  const el = document.getElementById('capture-flash')
+  if (!el) return
+  el.classList.remove('hidden')
+  el.style.animation = 'none'
+  void el.offsetWidth
+  el.style.opacity   = '1'
+  el.style.animation = 'captureFlash 0.55s ease-out forwards'
+  setTimeout(() => el.classList.add('hidden'), 600)
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function handleNext() {
+  const STEPS = getSteps()
+  direction = 'forward'
+  if (step < STEPS.length - 1) {
+    step++
+    renderStep(document.getElementById('app'))
+  } else {
+    renderProcessing(document.getElementById('app'))
+  }
+}
+
+function handleBack() {
+  if (step === 0) { stopStream(); router.go('scanner'); return }
+  direction = 'back'
+  step--
+  renderStep(document.getElementById('app'))
+}
+
+function handleSkip() {
+  const STEPS = getSteps()
+  const key = STEPS[step].key
+  scanData[key] = { image: null, timestamp: Date.now(), skipped: true }
+  captured[key] = true
+  handleNext()
+}
+
+function handleRetake() {
+  const STEPS = getSteps()
+  const key = STEPS[step].key
+  delete scanData[key]
+  delete captured[key]
+  direction = 'forward'
+  renderStep(document.getElementById('app'))
+}
+
+// ── Processing screen ─────────────────────────────────────────────────────────
+function renderProcessing(container) {
+  const STEPS = getSteps()
+  const faceImg = scanData.face?.image || scanData.eyes?.image || null
+
+  container.innerHTML = `
+    <div class="flex flex-col min-h-dvh bg-gradient-to-b from-[#0f0f1a] to-[#0d1a2e] slide-from-right">
+
+      <header class="flex items-center justify-center gap-3 py-5 px-4">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-white leading-tight">Face Health Scanner</h1>
+          <p id="header-sub" class="text-xs text-cyan-400/80">${t('sending')}</p>
+        </div>
+      </header>
+
+      <main class="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-8">
+
+        <!-- Face image with laser -->
+        <div class="relative w-44 h-56 rounded-2xl overflow-hidden border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/20">
+          ${faceImg
+            ? `<img src="${faceImg}" class="w-full h-full object-cover"/>`
+            : `<div class="w-full h-full bg-slate-800 flex items-center justify-center text-5xl">👤</div>`}
+          <div id="laser-line" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent processing-laser" style="top:0%"></div>
+          <div class="absolute inset-0 opacity-20" style="background-image:linear-gradient(rgba(34,211,238,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.5) 1px,transparent 1px);background-size:20px 20px"></div>
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="flex gap-2 flex-wrap justify-center max-w-xs">
+          ${STEPS.filter(s => scanData[s.key]?.image).map(s => `
+            <div class="relative w-10 rounded-lg overflow-hidden border border-cyan-500/40" style="height:3.25rem">
+              <img src="${scanData[s.key].image}" class="w-full h-full object-cover" alt="${s.emoji}"/>
+              <div class="absolute bottom-0 inset-x-0 bg-[#0f0f1a]/80 text-center" style="padding:1px 0">
+                <span style="font-size:10px">${s.emoji}</span>
+              </div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Progress -->
+        <div class="w-full max-w-sm flex flex-col gap-4">
+          <div class="flex flex-col items-center gap-3">
+            <div class="relative w-14 h-14">
+              <div class="absolute inset-0 rounded-full border-2 border-cyan-500/20"></div>
+              <div class="absolute inset-0 rounded-full border-2 border-cyan-400 border-t-transparent analyzing-spinner"></div>
+              <div class="absolute inset-2 rounded-full border border-blue-500/40 border-b-transparent analyzing-spinner" style="animation-duration:1.5s;animation-direction:reverse"></div>
+            </div>
+            <div class="text-center">
+              <p id="check-text" class="text-white font-semibold text-sm">${t('prep')}</p>
+              <p id="check-sub"  class="text-cyan-400/70 text-xs mt-0.5">${t('procSubLabel')}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-400">${t('progress')}</span>
+              <span id="pct-text" class="text-cyan-400 font-bold">0%</span>
+            </div>
+            <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div id="checks-list" class="flex flex-col gap-1.5 max-h-28 overflow-hidden"></div>
+
+          <!-- Error box -->
+          <div id="error-box" class="hidden rounded-2xl bg-red-500/10 border border-red-500/30 p-4 flex flex-col gap-3">
+            <div class="flex gap-2 items-start">
+              <span class="text-lg">⚠️</span>
+              <div class="flex-1">
+                <p class="text-red-300 font-semibold text-sm">${t('errorTitle')}</p>
+                <p id="error-msg" class="text-red-400/80 text-xs mt-1 leading-relaxed font-mono break-all"></p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button id="retry-api-btn"
+                class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-cyan-600 active:scale-95 transition-all">
+                ${t('btnRetryApi')}
+              </button>
+              <button id="demo-mode-btn"
+                class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-300 bg-slate-700 active:scale-95 transition-all">
+                ${t('btnDemo')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  `
+
+  runProcessing()
+}
+
+// ── Processing helpers ────────────────────────────────────────────────────────
+function setProgress(text, pct, sub = '') {
+  const el = document.getElementById('check-text')
+  const ps = document.getElementById('check-sub')
+  const pt = document.getElementById('pct-text')
+  const pb = document.getElementById('progress-bar')
+  const hs = document.getElementById('header-sub')
+  if (el) el.textContent = text
+  if (ps && sub) ps.textContent = sub
+  if (pt) pt.textContent = pct + '%'
+  if (pb) pb.style.width = pct + '%'
+  if (hs) hs.textContent = text
+}
+
+function addCheckItem(text, success = true) {
+  const list = document.getElementById('checks-list')
+  if (!list) return
+  const div = document.createElement('div')
+  div.className = 'flex items-center gap-2 check-pop'
+  div.innerHTML = `
+    <span class="w-4 h-4 rounded-full ${success ? 'bg-green-500/20' : 'bg-red-500/20'} flex items-center justify-center shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 ${success ? 'text-green-400' : 'text-red-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+        ${success
+          ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>'}
+      </svg>
+    </span>
+    <span class="text-xs text-slate-400">${text}</span>
+  `
+  list.appendChild(div)
+  list.scrollTop = list.scrollHeight
+}
+
+function showError(msg) {
+  const box     = document.getElementById('error-box')
+  const msgEl   = document.getElementById('error-msg')
+  const spinner = document.querySelector('.analyzing-spinner')
+  if (box)     box.classList.remove('hidden')
+  if (msgEl)   msgEl.textContent = msg
+  if (spinner) spinner.style.animationPlayState = 'paused'
+
+  document.getElementById('retry-api-btn')?.addEventListener('click', () => {
+    document.getElementById('error-box')?.classList.add('hidden')
+    const spinner2 = document.querySelector('.analyzing-spinner')
+    if (spinner2) spinner2.style.animationPlayState = 'running'
+    runProcessing()
+  })
+  document.getElementById('demo-mode-btn')?.addEventListener('click', runDemoMode)
+}
+
+// ── Gemini processing flow ────────────────────────────────────────────────────
+async function runProcessing() {
+  const imgCount = Object.values(scanData).filter(v => v?.image).length
+  try {
+    setProgress(t('prep'), 10, t('prepSub'))
+    await delay(400)
+    addCheckItem(`${imgCount} ${getLang() === 'bm' ? 'imej dirakam' : 'images recorded'} ✓`)
+
+    setProgress(t('sending'), 25, t('procSubLabel'))
+    await delay(300)
+
+    const { analyzeFaceImage, mapToConditions } = await import('../gemini-analyzer.js')
+    const geminiResult = await analyzeFaceImage(scanData)
+
+    addCheckItem(t('geminiDone'))
+
+    setProgress(t('parsing'), 55, t('parsingSub'))
+    await delay(500)
+    addCheckItem(t('eyesDone'))
+    await delay(300)
+    addCheckItem(t('skinDone'))
+    await delay(300)
+    addCheckItem(t('lipsDone'))
+
+    setProgress(t('mapping'), 78, '')
+    await delay(500)
+    const detected = mapToConditions(geminiResult, ALL_CONDITIONS)
+    addCheckItem(`${detected.length} ${getLang() === 'bm' ? 'keadaan kesihatan dikesan' : 'health conditions detected'} ✓`)
+
+    setProgress(t('compiling'), 92, t('almostDone'))
+    await delay(500)
+    addCheckItem(`${getLang() === 'bm' ? 'Keyakinan AI' : 'AI Confidence'}: ${Math.round((geminiResult.confidence ?? 0.8) * 100)}% ✓`)
+
+    setProgress(t('analysisDone'), 100, t('openingReport'))
+    await delay(700)
+
+    stopStream()
+    router.go('results', { scanData, detected, geminiResult })
+
+  } catch (err) {
+    console.error('[Gemini]', err)
+    addCheckItem(`${getLang() === 'bm' ? 'Ralat' : 'Error'}: ${err.message}`, false)
+    setProgress(getLang() === 'bm' ? 'Ralat semasa analisis' : 'Analysis error', 0, '')
+    showError(err.message)
+  }
+}
+
+// ── Demo fallback ─────────────────────────────────────────────────────────────
+async function runDemoMode() {
+  document.getElementById('error-box')?.classList.add('hidden')
+  const spinner = document.querySelector('.analyzing-spinner')
+  if (spinner) spinner.style.animationPlayState = 'running'
+
+  setProgress(t('demoSimulating'), 30, t('demoNoApi'))
+  await delay(800)
+  addCheckItem(t('demoActive'))
+
+  setProgress(t('demoRandom'), 70, '')
+  await delay(800)
+
+  const count    = 2 + Math.floor(Math.random() * 2)
+  const detected = [...ALL_CONDITIONS].sort(() => Math.random() - 0.5).slice(0, count)
+
+  setProgress(t('demoDone'), 100, '')
+  await delay(600)
+
+  stopStream()
+  router.go('results', { scanData, detected, geminiResult: null })
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+function speak(text) {
+  if (!window.speechSynthesis) return
+  speechSynthesis.cancel()
+  const u  = new SpeechSynthesisUtterance(text)
+  u.lang   = getLang() === 'bm' ? 'ms-MY' : 'en-US'
+  u.rate   = 0.88
+  u.pitch  = 1.05
+  speechSynthesis.speak(u)
+}
+
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern)
+}

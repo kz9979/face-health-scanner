@@ -1,0 +1,635 @@
+{
+  "appInfo": {
+    "name": "Face Health Scanner",
+    "version": "1.0",
+    "description": "AI-powered face health analysis combining TCM and Modern Medicine",
+    "languages": ["ms", "en"]
+  },
+
+  "healthConditions": {
+    "eyes": {
+      "yellowEyes": {
+        "id": "yellow_eyes",
+        "name": "Mata Kuning",
+        "nameEN": "Yellow Eyes",
+        "severity": "high",
+        "tcm": {
+          "organ": "Hati (Liver)",
+          "diagnosis": "Masalah hati, hempedu, atau limpa",
+          "cause": "Ketidakseimbangan Qi hati, haba berlebihan",
+          "treatment": "Herba penyejuk hati, elak makanan pedas/berminyak"
+        },
+        "modern": {
+          "condition": "Jaundice",
+          "causes": [
+            "Hepatitis (viral infection)",
+            "Masalah liver (sirosis, fatty liver)",
+            "Gallbladder problems",
+            "Pancreas issues",
+            "Alcohol abuse"
+          ],
+          "symptoms": [
+            "Kulit dan mata kuning",
+            "Air kencing gelap",
+            "Najis berwarna pucat"
+          ],
+          "action": "SEGERA jumpa doktor untuk ujian darah dan liver function test",
+          "tests": ["Liver Function Test", "Hepatitis Panel", "Ultrasound"]
+        },
+        "recommendations": [
+          "Elak alkohol sepenuhnya",
+          "Minum air kosong banyak",
+          "Makan makanan sihat",
+          "Rehat yang cukup"
+        ]
+      },
+
+      "puffyEyes": {
+        "id": "puffy_eyes",
+        "name": "Mata Bengkak",
+        "nameEN": "Puffy Eyes",
+        "severity": "low",
+        "tcm": {
+          "organ": "Buah Pinggang",
+          "diagnosis": "Fungsi buah pinggang lemah, cecair badan berlebihan",
+          "cause": "Kurang tidur, tekanan, diet tidak seimbang",
+          "treatment": "Akupunktur, herba menguatkan ginjal"
+        },
+        "modern": {
+          "condition": "Periorbital Edema",
+          "causes": [
+            "Fluid retention",
+            "Kurang tidur",
+            "Terlalu banyak makanan masin",
+            "Alahan (makanan, pollen, makeup)",
+            "Perubahan hormon",
+            "Penuaan (otot kelopak mata lemah)"
+          ],
+          "action": "Kurangkan garam, tidur cukup, kompres sejuk",
+          "tests": ["Kidney Function Test", "Allergy Test"]
+        },
+        "recommendations": [
+          "Tidur 7-9 jam sehari",
+          "Kurangkan makanan masin",
+          "Minum air kosong 2-3 liter",
+          "Kompres sejuk 10 minit",
+          "Tinggikan bantal masa tidur"
+        ]
+      },
+
+      "darkCircles": {
+        "id": "dark_circles",
+        "name": "Lingkaran Hitam",
+        "nameEN": "Dark Circles",
+        "severity": "low",
+        "tcm": {
+          "organ": "Buah Pinggang & Hati",
+          "diagnosis": "Kekurangan darah, Yin ginjal lemah",
+          "cause": "Kurang tidur, tekanan, letih",
+          "treatment": "Herba tonik darah, rehat cukup"
+        },
+        "modern": {
+          "condition": "Periorbital Hyperpigmentation",
+          "causes": [
+            "Sleep deprivation",
+            "Kekurangan tissue repair masa deep sleep",
+            "Genetik",
+            "Penuaan",
+            "Dehydration"
+          ],
+          "action": "Tidur cukup, guna eye cream, hidrasi",
+          "tests": []
+        },
+        "recommendations": [
+          "Tidur 7-9 jam",
+          "Guna cold compress",
+          "Minum air banyak",
+          "Guna sunscreen sekitar mata"
+        ]
+      },
+
+      "xanthelasma": {
+        "id": "xanthelasma",
+        "name": "Bintik Kuning di Kelopak Mata",
+        "nameEN": "Yellow Spots on Eyelids",
+        "severity": "medium",
+        "tcm": {
+          "organ": "Hati & Pundi Hempedu",
+          "diagnosis": "Lemak berlebihan, haba lembap",
+          "cause": "Diet tinggi lemak, fungsi liver lemah",
+          "treatment": "Herba kurangkan lemak, diet sihat"
+        },
+        "modern": {
+          "condition": "Xanthelasmata",
+          "causes": [
+            "Cholesterol deposits",
+            "High LDL cholesterol",
+            "Risiko penyakit jantung",
+            "Risiko serangan jantung"
+          ],
+          "action": "Check kolesterol segera, jumpa doktor",
+          "tests": ["Lipid Profile", "Heart Health Check"]
+        },
+        "recommendations": [
+          "Kurangkan makanan berlemak",
+          "Exercise 30 minit sehari",
+          "Makan ikan (omega-3)",
+          "Elak makanan goreng"
+        ]
+      },
+
+      "ptosis": {
+        "id": "ptosis",
+        "name": "Kelopak Mata Turun",
+        "nameEN": "Drooping Eyelid",
+        "severity": "high",
+        "tcm": {
+          "organ": "Qi Lemah",
+          "diagnosis": "Tenaga Qi tidak mencukupi",
+          "cause": "Keletihan kronik, penuaan",
+          "treatment": "Akupunktur, herba tonik Qi"
+        },
+        "modern": {
+          "condition": "Ptosis/Blepharoptosis",
+          "causes": [
+            "Masalah otak",
+            "Masalah saraf",
+            "Eye socket issues",
+            "Stroke (jika tiba-tiba)",
+            "Myasthenia gravis"
+          ],
+          "symptoms": [
+            "Double vision",
+            "Lemah otot",
+            "Susah telan",
+            "Sakit kepala teruk"
+          ],
+          "action": "SEGERA jumpa doktor jika berlaku tiba-tiba (jam/hari) - tanda stroke!",
+          "tests": ["Neurological Exam", "CT Scan", "MRI"]
+        },
+        "recommendations": [
+          "Pemeriksaan doktor segera",
+          "Jangan tunggu jika simptom mendadak"
+        ]
+      }
+    },
+
+    "skin": {
+      "butterflyRash": {
+        "id": "butterfly_rash",
+        "name": "Ruam Rama-Rama",
+        "nameEN": "Butterfly Rash",
+        "severity": "high",
+        "tcm": {
+          "organ": "Paru-paru & Hati",
+          "diagnosis": "Panas berlebihan, ketidakseimbangan Qi",
+          "cause": "Sistem imun lemah, toksin",
+          "treatment": "Herba penyejuk, detoks"
+        },
+        "modern": {
+          "condition": "Lupus (Systemic Lupus Erythematosus)",
+          "causes": [
+            "Autoimmune disease",
+            "Sistem imun attack tisu dan organ sendiri"
+          ],
+          "symptoms": [
+            "Ruam bentuk rama-rama di pipi",
+            "Demam",
+            "Sendi sakit/kaku",
+            "Jari jadi biru bila sejuk",
+            "Letih berpanjangan"
+          ],
+          "action": "SEGERA jumpa doktor rheumatologist",
+          "tests": ["ANA Test", "Anti-dsDNA", "Blood Count"]
+        },
+        "recommendations": [
+          "Elak matahari langsung",
+          "Guna sunscreen SPF 50+",
+          "Rehat cukup",
+          "Ikut rawatan doktor"
+        ]
+      },
+
+      "melasma": {
+        "id": "melasma",
+        "name": "Tompok Gelap",
+        "nameEN": "Melasma",
+        "severity": "low",
+        "tcm": {
+          "organ": "Hati & Darah",
+          "diagnosis": "Darah stagnan, Qi hati tidak lancar",
+          "cause": "Ketidakseimbangan hormon",
+          "treatment": "Herba melancarkan darah"
+        },
+        "modern": {
+          "condition": "Melasma",
+          "causes": [
+            "Kehamilan",
+            "Pil perancang keluarga",
+            "Ketidakseimbangan hormon",
+            "Pendedahan matahari"
+          ],
+          "action": "Guna sunscreen, rawatan dermatologi",
+          "tests": []
+        },
+        "recommendations": [
+          "Sunscreen SPF 50+ setiap hari",
+          "Elak matahari 10am-4pm",
+          "Rawatan chemical peel",
+          "Krim whitening (hydroquinone)"
+        ]
+      },
+
+      "moles": {
+        "id": "moles",
+        "name": "Tahi Lalat",
+        "nameEN": "Moles",
+        "severity": "medium",
+        "tcm": {
+          "organ": "Darah & Qi",
+          "diagnosis": "Darah stagnan, toksin terkumpul",
+          "cause": "Ketidakseimbangan dalaman",
+          "treatment": "Detoks, herba melancarkan darah"
+        },
+        "modern": {
+          "condition": "Skin Cancer Detection (ABCDE)",
+          "checks": {
+            "A": "Asymmetrical - Bentuk berbeza setiap sisi?",
+            "B": "Border - Tepi tidak rata/jagged?",
+            "C": "Color - Warna tidak sekata?",
+            "D": "Diameter - Lebih besar dari 6mm (saiz pea)?",
+            "E": "Evolving - Berubah dalam beberapa minggu?"
+          },
+          "action": "Jumpa doktor kulit jika YA kepada mana-mana ABCDE",
+          "tests": ["Skin Biopsy", "Dermatoscopy"]
+        },
+        "recommendations": [
+          "Check tahi lalat setiap bulan",
+          "Ambil gambar untuk compare",
+          "Guna sunscreen",
+          "Elak matahari berlebihan"
+        ]
+      },
+
+      "acne": {
+        "id": "acne",
+        "name": "Jerawat",
+        "nameEN": "Acne/Breakouts",
+        "severity": "low",
+        "tcm": {
+          "forehead": {
+            "organ": "Sistem Pencernaan & Usus",
+            "cause": "Makanan tidak sihat, kurang tidur, tekanan"
+          },
+          "cheeks": {
+            "left": "Hati panas",
+            "right": "Paru-paru panas",
+            "cause": "Alahan, sinus, masalah respirasi"
+          },
+          "chin": {
+            "organ": "Sistem Hormon & Reproduktif",
+            "cause": "Ketidakseimbangan hormon (kitaran haid)"
+          },
+          "nose": {
+            "organ": "Jantung",
+            "cause": "Tekanan darah tinggi, kolesterol"
+          }
+        },
+        "modern": {
+          "condition": "Acne Vulgaris",
+          "causes": [
+            "Hormon tidak seimbang (androgen)",
+            "Kurang tidur (rosakkan hormon & imun)",
+            "Stress",
+            "Diet tinggi gula/lemak",
+            "Kebersihan buruk",
+            "PCOS (wanita)"
+          ],
+          "action": "Rawatan dermatologi, ubat topikal",
+          "tests": ["Hormone Test (jika teruk)"]
+        },
+        "recommendations": [
+          "Basuh muka 2x sehari",
+          "Jangan picit jerawat",
+          "Tidur 7-9 jam",
+          "Kurangkan gula & makanan proses",
+          "Minum air banyak"
+        ]
+      }
+    },
+
+    "mouth": {
+      "coldSores": {
+        "id": "cold_sores",
+        "name": "Luka di Bibir",
+        "nameEN": "Cold Sores",
+        "severity": "low",
+        "tcm": {
+          "organ": "Perut & Usus",
+          "diagnosis": "Panas dalam perut, toksin",
+          "cause": "Makanan pedas/berminyak",
+          "treatment": "Herba penyejuk, elak makanan panas"
+        },
+        "modern": {
+          "condition": "Herpes Simplex Type 1",
+          "causes": [
+            "Jangkitan virus herpes",
+            "Stress",
+            "Demam/sakit",
+            "Terlalu lama dalam matahari",
+            "Over-tired"
+          ],
+          "symptoms": [
+            "Melepuh berisi air",
+            "Sakit/gatal",
+            "Keradangan"
+          ],
+          "action": "Ubat antiviral jika kerap berlaku",
+          "tests": []
+        },
+        "recommendations": [
+          "Jangan sentuh/kopek",
+          "Guna lip balm SPF",
+          "Rehat cukup",
+          "Elak stress"
+        ]
+      },
+
+      "crackedLips": {
+        "id": "cracked_lips",
+        "name": "Bibir Pecah",
+        "nameEN": "Cracked Lips",
+        "severity": "low",
+        "tcm": {
+          "organ": "Limpa & Perut",
+          "diagnosis": "Kekurangan cecair badan (Yin)",
+          "cause": "Panas dalam, kurang air",
+          "treatment": "Minum air, herba melembap"
+        },
+        "modern": {
+          "condition": "Cheilitis",
+          "causes": [
+            "Dehydration (kurang air)",
+            "Alahan (lipstick, makanan)",
+            "Reaksi ubat (steroids)",
+            "Kekurangan Vitamin B",
+            "Cuaca kering"
+          ],
+          "action": "Minum air banyak, guna lip balm",
+          "tests": []
+        },
+        "recommendations": [
+          "Minum 2-3 liter air sehari",
+          "Guna lip balm melembap",
+          "Elak jilat bibir",
+          "Makan makanan kaya Vitamin B"
+        ]
+      },
+
+      "angularCheilitis": {
+        "id": "angular_cheilitis",
+        "name": "Sudut Bibir Pecah",
+        "nameEN": "Angular Cheilitis",
+        "severity": "low",
+        "tcm": {
+          "organ": "Limpa & Perut",
+          "diagnosis": "Kelembapan berlebihan, haba",
+          "cause": "Pencernaan lemah",
+          "treatment": "Herba kuatkan pencernaan"
+        },
+        "modern": {
+          "condition": "Angular Cheilitis",
+          "causes": [
+            "Kekurangan Vitamin B2, B3, B12",
+            "Kekurangan Zat Besi (Iron)",
+            "Kekurangan Zinc",
+            "Jangkitan kulat"
+          ],
+          "action": "Ambil supplement Vitamin B & Iron",
+          "tests": ["Blood Test (Vitamin levels)"]
+        },
+        "recommendations": [
+          "Makan daging, ikan, telur",
+          "Supplement Vitamin B complex",
+          "Guna petroleum jelly"
+        ]
+      }
+    },
+
+    "hair": {
+      "hirsutism": {
+        "id": "hirsutism",
+        "name": "Bulu Berlebihan di Muka",
+        "nameEN": "Facial Hair (Hirsutism)",
+        "severity": "medium",
+        "tcm": {
+          "organ": "Ginjal & Hati",
+          "diagnosis": "Ketidakseimbangan hormon, Qi stagnan",
+          "cause": "Ginjal Yin lemah",
+          "treatment": "Herba seimbangkan hormon"
+        },
+        "modern": {
+          "condition": "PCOS (Polycystic Ovary Syndrome)",
+          "causes": [
+            "Hormon androgen tinggi",
+            "Ketidakseimbangan hormon wanita",
+            "Rintangan insulin"
+          ],
+          "symptoms": [
+            "Bulu tebal di dagu/muka",
+            "Kitaran haid tidak teratur",
+            "Sukar hamil",
+            "Berat badan naik"
+          ],
+          "action": "Jumpa doktor untuk ujian hormon",
+          "tests": ["Hormone Panel", "Ultrasound Ovari"]
+        },
+        "recommendations": [
+          "Check hormon dengan doktor",
+          "Diet rendah karbohidrat",
+          "Exercise tetap",
+          "Rawatan laser untuk bulu"
+        ]
+      },
+
+      "alopecia": {
+        "id": "alopecia",
+        "name": "Kehilangan Rambut/Bulu",
+        "nameEN": "Hair Loss (Alopecia Areata)",
+        "severity": "medium",
+        "tcm": {
+          "organ": "Ginjal & Darah",
+          "diagnosis": "Ginjal Qi lemah, darah tidak mencukupi",
+          "cause": "Stress, keturunan, pemakanan",
+          "treatment": "Herba tonik ginjal & darah"
+        },
+        "modern": {
+          "condition": "Alopecia Areata",
+          "causes": [
+            "Autoimmune disease",
+            "Sistem imun attack hair follicles",
+            "Stress",
+            "Genetik"
+          ],
+          "symptoms": [
+            "Tompok botak di kepala",
+            "Kehilangan bulu mata/kening",
+            "Kuku rapuh"
+          ],
+          "action": "Jumpa doktor kulit untuk rawatan",
+          "tests": ["Blood Test", "Scalp Biopsy"]
+        },
+        "recommendations": [
+          "Ubat steroid (topikal/injection)",
+          "Minoxidil",
+          "Kurangkan stress",
+          "Makan makanan berkhasiat"
+        ]
+      }
+    },
+
+    "neurological": {
+      "bellsPalsy": {
+        "id": "bells_palsy",
+        "name": "Lumpuh Separuh Muka",
+        "nameEN": "Bell's Palsy",
+        "severity": "medium",
+        "tcm": {
+          "organ": "Meridian Muka",
+          "diagnosis": "Angin (Wind) menyerang meridian",
+          "cause": "Serangan luar (angin/sejuk)",
+          "treatment": "Akupunktur, herba halau angin"
+        },
+        "modern": {
+          "condition": "Bell's Palsy",
+          "causes": [
+            "Virus tekan saraf muka",
+            "Keradangan saraf facial",
+            "Herpes simplex virus"
+          ],
+          "symptoms": [
+            "Tak boleh gerak satu sisi muka",
+            "Muka senget",
+            "Sakit di rahang/belakang telinga",
+            "Muncul dalam jam/hari"
+          ],
+          "action": "Jumpa doktor untuk steroid",
+          "tests": ["Neurological Exam"]
+        },
+        "recommendations": [
+          "Rawatan biasanya baik dalam 3-6 bulan",
+          "Latihan muka",
+          "Lindungi mata (eye drop)",
+          "Rehat cukup"
+        ]
+      },
+
+      "stroke": {
+        "id": "stroke",
+        "name": "Lumpuh Muka + Simptom Lain",
+        "nameEN": "Stroke",
+        "severity": "critical",
+        "tcm": {
+          "organ": "Otak & Jantung",
+          "diagnosis": "Qi dan darah tersumbat ke otak",
+          "cause": "Angin dalaman, darah stagnan",
+          "treatment": "Akupunktur segera, herba melancarkan darah"
+        },
+        "modern": {
+          "condition": "STROKE",
+          "causes": [
+            "Saluran darah ke otak tersumbat",
+            "Saluran darah pecah",
+            "Tekanan darah tinggi",
+            "Kolesterol tinggi"
+          ],
+          "symptoms": [
+            "Separuh bawah muka lumpuh tiba-tiba",
+            "Kebas/lemah tangan/kaki",
+            "Cakap tak jelas/slurred speech",
+            "Double vision",
+            "Pening/dizziness",
+            "Susah telan"
+          ],
+          "action": "KECEMASAN! Segera ke hospital! Masa adalah otak!",
+          "tests": ["CT Scan", "MRI", "Blood Tests"]
+        },
+        "recommendations": [
+          "FASTER - Face, Arms, Speech, Time",
+          "Jangan tunggu, segera ke hospital",
+          "Golden hour penting"
+        ]
+      }
+    }
+  },
+
+  "sleepDeprivation": {
+    "id": "sleep_deprivation",
+    "name": "Tanda-tanda Kurang Tidur",
+    "nameEN": "Signs of Sleep Deprivation",
+    "severity": "medium",
+    "recommendedSleep": "7-9 jam sehari untuk dewasa",
+    "signs": {
+      "breakouts": { "name": "Jerawat/Breakouts", "cause": "Kurang tidur rosakkan hormon & sistem imun" },
+      "eyesBad": { "name": "Mata Tak Cantik", "symptoms": ["Mata merah", "Bengkak", "Lingkaran hitam", "Beg bawah mata", "Lebih kedutan"], "cause": "Badan miss hormone control & tissue repair masa deep sleep" },
+      "weightGain": { "name": "Berat Badan Naik", "cause": "Hormon kenyang (leptin) turun, hormon lapar (ghrelin) naik" },
+      "craveJunkFood": { "name": "Terliar Junk Food", "cause": "Otak penat, judgment & decision-making tak tajam" },
+      "moreCaffeine": { "name": "Minum Lebih Kafein", "risk": "Boleh bawa kepada insomnia & anxiety" },
+      "moody": { "name": "Mood Merudum", "symptoms": ["Cepat melenting", "Stress", "Marah", "Mental exhausted"] },
+      "depressed": { "name": "Rasa Depresi", "cause": "Depression & poor sleep adalah circular (saling berkait)" },
+      "focusDim": { "name": "Fokus & Memori Merudum", "cause": "Hilang 2 jam tidur je pun boleh buat grogy & affect concentration", "danger": "Berbahaya bila drive (1/3 orang admit dozing off)" },
+      "morningsCrummy": { "name": "Pagi-pagi Rasa Teruk", "symptoms": ["Sakit tekak", "Mulut kering", "Sakit kepala"], "possibleCause": ["Sleep apnea", "Snoring", "Acid reflux"] }
+    },
+    "recommendations": [
+      "Tidur 7-9 jam sehari",
+      "Stick to schedule (tidur & bangun masa sama)",
+      "Bilik sejuk, senyap, dan gelap",
+      "Exercise tetap (terutama yang pump heart)",
+      "Elak screen 1 jam sebelum tidur",
+      "Elak kafein lepas 2pm"
+    ]
+  },
+
+  "nutritionalDeficiencies": {
+    "paleEyelids": { "name": "Kelopak Mata Pucat", "deficiency": "Anemia (Kurang Zat Besi)", "action": "Makan daging merah, hati, bayam. Ambil iron supplement" },
+    "swollenTongue": { "name": "Lidah Bengkak/Licin", "deficiency": "Vitamin B12, Asid Folik, Zinc", "action": "Supplement B12, makan daging, ikan, telur" },
+    "bleedingGums": { "name": "Gusi Mudah Berdarah", "deficiency": "Vitamin C", "action": "Makan buah sitrus, kiwi, strawberry, brokoli" },
+    "drySkin": { "name": "Kulit Sangat Kering", "deficiency": "Vitamin A, D, E", "action": "Supplement, makan ikan, kacang, sayur hijau" }
+  },
+
+  "faceMapping": {
+    "tcm": {
+      "forehead": { "organs": ["Sistem Pencernaan", "Usus Kecil", "Pundi Kencing"], "issues": "Diet tidak sihat, kurang tidur, tekanan" },
+      "temples": { "organs": ["Buah Pinggang", "Pundi Kencing"], "issues": "Jangkitan buah pinggang, reaksi ubat" },
+      "betweenEyebrows": { "organs": ["Hati (Liver)"], "issues": "Fungsi detoksifikasi terganggu, toksin" },
+      "underEyes": { "organs": ["Buah Pinggang", "Cecair Badan"], "issues": "Fungsi ginjal lemah, tekanan, kurang air" },
+      "nose": { "organs": ["Jantung"], "issues": "Tekanan darah tinggi, kolesterol, peredaran darah" },
+      "cheeks": {
+        "left": { "organs": ["Hati"], "issues": "Panas di hati" },
+        "right": { "organs": ["Paru-paru"], "issues": "Panas di paru-paru, masalah respirasi" }
+      },
+      "mouth": { "organs": ["Perut", "Usus Besar"], "issues": "Masalah pencernaan, diet terlalu sejuk/mentah" },
+      "chin": { "organs": ["Sistem Hormon", "Sistem Reproduktif", "Usus Kecil"], "issues": "Ketidakseimbangan hormon, stres, alahan makanan" },
+      "neck": { "organs": ["Sistem Imun"], "issues": "Tekanan menjejaskan sistem imun" }
+    }
+  },
+
+  "actionLevels": {
+    "critical": { "color": "#FF0000", "icon": "🚨", "message": "KECEMASAN! Segera dapatkan rawatan perubatan!", "timeframe": "Segera/Sekarang" },
+    "high": { "color": "#FF6B00", "icon": "⚠️", "message": "Serius! Jumpa doktor secepat mungkin", "timeframe": "Dalam 1-3 hari" },
+    "medium": { "color": "#FFA500", "icon": "⚡", "message": "Perlu perhatian. Pertimbangkan untuk check-up", "timeframe": "Dalam 1-2 minggu" },
+    "low": { "color": "#FFD700", "icon": "ℹ️", "message": "Perubahan gaya hidup disyorkan", "timeframe": "Pemerhatian berterusan" }
+  },
+
+  "generalRecommendations": {
+    "daily": ["Tidur 7-9 jam", "Minum air 2-3 liter", "Makan sayur & buah", "Exercise 30 minit", "Check muka dalam cermin"],
+    "weekly": ["Check tahi lalat (ABCDE)", "Timbang berat badan", "Ukur tekanan darah (jika ada alat)"],
+    "monthly": ["Ambil gambar muka untuk compare", "Review sleep pattern", "Check progress kesihatan"],
+    "yearly": ["Full medical check-up", "Blood test (kolesterol, gula, liver, kidney)", "Dental check-up"]
+  },
+
+  "disclaimer": {
+    "ms": "APLIKASI INI HANYA UNTUK TUJUAN MAKLUMAT DAN PENDIDIKAN. Ia BUKAN pengganti diagnosis atau rawatan perubatan profesional. Jika anda mempunyai tanda-tanda penyakit yang serius, SILA JUMPA DOKTOR dengan segera. Jangan tangguhkan rawatan perubatan berdasarkan keputusan dari aplikasi ini.",
+    "en": "THIS APPLICATION IS FOR INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY. It is NOT a substitute for professional medical diagnosis or treatment. If you have signs of serious illness, PLEASE SEE A DOCTOR immediately. Do not delay medical treatment based on results from this application."
+  }
+}
