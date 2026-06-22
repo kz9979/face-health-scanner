@@ -1,8 +1,8 @@
-// Vision API — face health analyzer (OpenAI GPT-4o Vision)
+// Vision API — face health analyzer (Anthropic Claude Vision)
 
-const API_KEY = import.meta.env.VITE_OPENAI_API_KEY
-const API_URL = 'https://api.openai.com/v1/chat/completions'
-const MODEL   = 'gpt-4o'
+const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
+const API_URL = 'https://api.anthropic.com/v1/messages'
+const MODEL   = 'claude-haiku-4-5-20251001'
 
 // Human-readable names for condition IDs (used in prompt context)
 const CONDITION_NAMES = {
@@ -18,59 +18,78 @@ const CONDITION_NAMES = {
   allergies:    'Allergies',
 }
 
-const SYSTEM_PROMPT = `You are a structured visual observation assistant. The user is submitting their own facial photos for a personal wellness self-check app. Your task is to complete a structured JSON observation form based only on what is visually present in the image(s). Output only valid JSON — no commentary, no refusals, no extra text.`
+const SYSTEM_PROMPT = `You are a visual wellness screening assistant for a personal health self-awareness app. The user has submitted their own facial photos to observe visible physical indicators for educational self-awareness purposes only — this is not medical diagnosis. Analyze the images and return only a strict JSON object as instructed. Do not refuse, add disclaimers, or return anything other than the requested JSON.`
 
-const BASE_PROMPT = `Complete this visual observation form based on the image(s) provided. Observe only what is clearly visible.
+const BASE_PROMPT = `Analyze the facial image(s) and complete the following JSON observation form.
 
-IMPORTANT: If no human face is clearly visible (camera covered, blank/dark image, only background), return {"faceDetected": false} and nothing else.
+IMPORTANT: If no clear human face is visible (camera covered, blank/dark image, only background), return exactly: {"faceDetected": false}
 
-Otherwise, fill in the form below. Mark true only if you can clearly observe it (confidence > 0.6). If unsure, mark false.
+Otherwise, observe what is visually present and return this JSON (replace all placeholders with actual values):
 
-EYES — observe the eye area:
-- Are the whites of the eyes yellowish or discoloured? → eyes.yellow
-- Are there dark-coloured areas or shadows under the eyes? → eyes.darkCircles
-- Is there visible swelling or puffiness around the eyes? → eyes.puffy
-- Are the eyes visibly red or bloodshot? → eyes.red
-
-SKIN — observe the facial skin:
-- Is there a reddish or rash-like pattern across both cheeks and the nose bridge in a butterfly shape? → skin.butterflyRash
-- Are there visible pimples or acne? Rate severity → skin.acne: "none" / "mild" / "moderate" / "severe"
-- Are there dark or brownish patches on the skin? → skin.melasma
-- Is the skin visibly red or irritated in patches? → skin.redness
-- Are there small yellowish deposits or spots near the eyelids? → skin.xanthelasma
-
-LIPS — observe the lip area:
-- Are the lips visibly dry, chapped, or cracked? → lips.cracked
-- Do the lips appear unusually pale or colourless? → lips.pale
-- Are there visible sores, blisters, or lesions on or around the lips? → lips.sores
-- Are there cracks or sores at the corners of the mouth? → lips.angularCheilitis
-
-TONGUE — observe only if tongue is clearly visible:
-- What colour does the tongue appear? → tongue.color: "pink" / "pale" / "red" / "yellow" / "white"
-- Does the tongue look swollen? → tongue.swollen
-- Does the tongue surface look unusually smooth (no texture/bumps)? → tongue.smooth
-
-FACE STRUCTURE — observe overall face shape:
-- Does the face look puffy or swollen overall? → face.puffy
-- Is one side of the face noticeably different from the other? → face.asymmetric
-- Is one or both eyelids visibly drooping lower than normal? → face.droopingEyelid
-
-Return ONLY this JSON (no markdown, no explanation):
 {
   "faceDetected": true,
-  "eyes": { "yellow": false, "darkCircles": false, "puffy": false, "red": false },
-  "skin": { "butterflyRash": false, "acne": "none", "melasma": false, "redness": false, "xanthelasma": false },
-  "lips": { "cracked": false, "pale": false, "sores": false, "angularCheilitis": false },
-  "tongue": { "color": "pink", "swollen": false, "smooth": false },
-  "face": { "puffy": false, "asymmetric": false, "droopingEyelid": false },
+  "eyes": {
+    "yellow": false,
+    "darkCircles": false,
+    "puffy": false,
+    "red": false
+  },
+  "skin": {
+    "butterflyRash": false,
+    "acne": "none",
+    "melasma": false,
+    "redness": false,
+    "xanthelasma": false
+  },
+  "lips": {
+    "cracked": false,
+    "pale": false,
+    "sores": false,
+    "angularCheilitis": false
+  },
+  "tongue": {
+    "color": "pink",
+    "swollen": false,
+    "smooth": false
+  },
+  "face": {
+    "puffy": false,
+    "asymmetric": false,
+    "droopingEyelid": false
+  },
   "detectedConditions": [],
   "severity": "low",
   "confidence": 0.0,
-  "notes": "Brief summary of what you observed.",
+  "notes": "Brief description of what you observe.",
   "existingConditionNotes": ""
-}`
+}
 
-// ── Map OpenAI boolean flags → condition IDs ──────────────────────────────────
+Field guide:
+- eyes.yellow: whites of eyes appear yellowish
+- eyes.darkCircles: dark shadows under eyes
+- eyes.puffy: swelling around eyes
+- eyes.red: bloodshot or red eyes
+- skin.butterflyRash: redness across cheeks and nose bridge in butterfly pattern
+- skin.acne: "none" / "mild" / "moderate" / "severe"
+- skin.melasma: dark or brownish skin patches
+- skin.redness: generalised skin redness or irritation
+- skin.xanthelasma: small yellowish deposits near eyelids
+- lips.cracked: dry, chapped, or cracked lips
+- lips.pale: unusually pale or colourless lips
+- lips.sores: visible blisters or sores on/around lips
+- lips.angularCheilitis: cracks or sores at corners of mouth
+- tongue.color: "pink" / "pale" / "red" / "yellow" / "white" (if tongue not visible, use "pink")
+- tongue.swollen: tongue appears enlarged
+- tongue.smooth: tongue surface lacks normal texture
+- face.puffy: overall facial puffiness or swelling
+- face.asymmetric: one side of face noticeably different
+- face.droopingEyelid: one or both eyelids drooping lower than normal
+- severity: overall impression — "low" / "medium" / "high" / "critical"
+- confidence: your confidence in the observations, 0.0 to 1.0
+
+Return ONLY the JSON. No explanation, no markdown fences.`
+
+// ── Map result flags → condition IDs ─────────────────────────────────────────
 const FLAG_MAP = [
   { path: 'eyes.yellow',          id: 'yellow_eyes'      },
   { path: 'eyes.darkCircles',     id: 'dark_circles'     },
@@ -91,13 +110,12 @@ function getPath(obj, path) {
   return path.split('.').reduce((o, k) => o?.[k], obj)
 }
 
-// ── Send image(s) to OpenAI ───────────────────────────────────────────────────
+// ── Send image(s) to Claude ───────────────────────────────────────────────────
 export async function analyzeFaceImage(scanData, userProfile = {}) {
-  if (!API_KEY) throw new Error('VITE_OPENAI_API_KEY not set in .env')
+  if (!API_KEY) throw new Error('VITE_ANTHROPIC_API_KEY not set in .env')
 
-  // Debug: log masked key
-  const maskedKey = `${API_KEY.slice(0, 7)}…${API_KEY.slice(-4)}`
-  console.log(`[OpenAI] Key: ${maskedKey} | Model: ${MODEL}`)
+  const maskedKey = `${API_KEY.slice(0, 8)}…${API_KEY.slice(-4)}`
+  console.log(`[Claude] Key: ${maskedKey} | Model: ${MODEL}`)
 
   // Build patient context prefix
   const { age, gender, conditions = [], conditionsOther = '' } = userProfile
@@ -108,11 +126,10 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
     profilePrefix += 'PATIENT DEMOGRAPHICS:\n'
     if (age)         profilePrefix += `- Age: ${age} years old\n`
     if (genderLabel) profilePrefix += `- Gender: ${genderLabel}\n`
-    profilePrefix += 'Apply age- and gender-appropriate clinical reasoning:\n'
-    if (genderLabel === 'male')   profilePrefix += '  • Exclude female-specific conditions (pregnancy, menstruation-related).\n'
-    if (genderLabel === 'female') profilePrefix += '  • Include female-specific conditions where clinically relevant.\n'
-    if (age && age < 18)  profilePrefix += '  • Focus on paediatric/adolescent presentations.\n'
-    if (age && age > 60)  profilePrefix += '  • Consider age-related degenerative and vascular presentations.\n'
+    if (genderLabel === 'male')   profilePrefix += '- Exclude female-specific presentations.\n'
+    if (genderLabel === 'female') profilePrefix += '- Include female-specific presentations where relevant.\n'
+    if (age && age < 18)  profilePrefix += '- Focus on adolescent/paediatric presentations.\n'
+    if (age && age > 60)  profilePrefix += '- Consider age-related vascular and degenerative presentations.\n'
     profilePrefix += '\n'
   }
 
@@ -122,26 +139,25 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
       return CONDITION_NAMES[c] || c
     }).join(', ')
     profilePrefix += `DISCLOSED EXISTING CONDITIONS: ${condList}\n`
-    profilePrefix += 'Interpretation rules for existing conditions:\n'
-    profilePrefix += '  1. If a visual finding is expected or consistent with a disclosed condition, note it as "consistent with [condition name]" — do not flag it as a new alarming finding.\n'
-    profilePrefix += '  2. If a finding appears unrelated to any disclosed condition, flag it explicitly as a "new finding" requiring separate medical attention.\n'
-    profilePrefix += '  3. Do not re-diagnose disclosed conditions unless you see signs of complications, worsening, or new comorbidities.\n'
-    profilePrefix += '  4. Populate the "existingConditionNotes" field to clearly distinguish related vs new findings.\n\n'
+    profilePrefix += '- If a finding is consistent with a disclosed condition, note it in existingConditionNotes as "consistent with [condition]".\n'
+    profilePrefix += '- If a finding appears unrelated, flag it as a "new finding".\n'
+    profilePrefix += '- Populate existingConditionNotes to distinguish related vs new findings.\n\n'
   }
 
   const PROMPT = profilePrefix + BASE_PROMPT
 
-  // Build content array — images first, then text prompt
+  // Build content array — images first, then text
   const SCAN_PRIORITY = ['face', 'tongue', 'lips', 'eyes', 'sclera', 'skin']
   const contentParts = []
 
   for (const key of SCAN_PRIORITY) {
     const entry = scanData[key]
     if (!entry?.image || entry.skipped) continue
-    // OpenAI accepts base64 as a data URI in image_url
+    // Strip data URI prefix — Claude takes raw base64
+    const base64 = entry.image.replace(/^data:image\/\w+;base64,/, '')
     contentParts.push({
-      type: 'image_url',
-      image_url: { url: entry.image, detail: 'high' },
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
     })
     if (contentParts.length >= 3) break
   }
@@ -151,20 +167,19 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
   contentParts.push({ type: 'text', text: PROMPT })
 
   const body = {
-    model: MODEL,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user',   content: contentParts  },
-    ],
+    model:      MODEL,
     max_tokens: 1024,
-    temperature: 0.15,
+    system:     SYSTEM_PROMPT,
+    messages:   [{ role: 'user', content: contentParts }],
   }
 
   const res = await fetch(API_URL, {
     method:  'POST',
     headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type':                          'application/json',
+      'x-api-key':                             API_KEY,
+      'anthropic-version':                     '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify(body),
   })
@@ -172,16 +187,15 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}))
     const msg = errBody?.error?.message || `HTTP ${res.status}`
-    console.error('[OpenAI] API error:', res.status, errBody)
+    console.error('[Claude] API error:', res.status, errBody)
     throw new GeminiError(msg, res.status, errBody)
   }
 
   const data = await res.json()
-  const rawText = data?.choices?.[0]?.message?.content ?? ''
+  const rawText = data?.content?.[0]?.text ?? ''
 
-  // Extract JSON — strip markdown fences if present
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error(`OpenAI returned no JSON.\n\nRaw response:\n${rawText.slice(0, 400)}`)
+  if (!jsonMatch) throw new Error(`Claude returned no JSON.\n\nRaw response:\n${rawText.slice(0, 400)}`)
 
   return JSON.parse(jsonMatch[0])
 }
