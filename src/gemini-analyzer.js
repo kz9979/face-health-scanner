@@ -1,7 +1,8 @@
-// Gemini Vision API — face health analyzer
+// Vision API — face health analyzer (OpenAI GPT-4o Vision)
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const API_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`
+const API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+const API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL   = 'gpt-4o'
 
 // Human-readable names for condition IDs (used in prompt context)
 const CONDITION_NAMES = {
@@ -91,9 +92,10 @@ Return analysis in strict JSON format:
   "existingConditionNotes": "If existing conditions were disclosed: note which visual findings are consistent with those conditions vs which appear to be new, unrelated findings. Use plain language. Empty string if no existing conditions were provided."
 }
 
-Only include conditions you can see with reasonable confidence (>0.6). If unsure, mark as false.`
+Only include conditions you can see with reasonable confidence (>0.6). If unsure, mark as false.
+Respond with ONLY the JSON object — no markdown fences, no extra text.`
 
-// ── Map Gemini boolean flags → condition IDs ──────────────────────────────────
+// ── Map OpenAI boolean flags → condition IDs ──────────────────────────────────
 const FLAG_MAP = [
   { path: 'eyes.yellow',          id: 'yellow_eyes'      },
   { path: 'eyes.darkCircles',     id: 'dark_circles'     },
@@ -102,7 +104,7 @@ const FLAG_MAP = [
   { path: 'skin.melasma',         id: 'melasma'          },
   { path: 'skin.xanthelasma',     id: 'xanthelasma'      },
   { path: 'lips.cracked',         id: 'cracked_lips'     },
-  { path: 'lips.pale',            id: 'cracked_lips'     }, // closest match
+  { path: 'lips.pale',            id: 'cracked_lips'     },
   { path: 'lips.sores',           id: 'cold_sores'       },
   { path: 'lips.angularCheilitis',id: 'angular_cheilitis'},
   { path: 'face.droopingEyelid',  id: 'ptosis'           },
@@ -114,15 +116,15 @@ function getPath(obj, path) {
   return path.split('.').reduce((o, k) => o?.[k], obj)
 }
 
-// ── Send image(s) to Gemini ───────────────────────────────────────────────────
+// ── Send image(s) to OpenAI ───────────────────────────────────────────────────
 export async function analyzeFaceImage(scanData, userProfile = {}) {
-  if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY not set in .env')
+  if (!API_KEY) throw new Error('VITE_OPENAI_API_KEY not set in .env')
 
-  // Debug: log masked key so we can confirm which key is active at runtime
-  const maskedKey = `${API_KEY.slice(0, 6)}…${API_KEY.slice(-4)}`
-  console.log(`[Gemini] Key: ${maskedKey} | URL: ${API_URL.replace(API_KEY, maskedKey)}`)
+  // Debug: log masked key
+  const maskedKey = `${API_KEY.slice(0, 7)}…${API_KEY.slice(-4)}`
+  console.log(`[OpenAI] Key: ${maskedKey} | Model: ${MODEL}`)
 
-  // Build patient context prefix for the prompt
+  // Build patient context prefix
   const { age, gender, conditions = [], conditionsOther = '' } = userProfile
   const genderLabel = gender === 'male' ? 'male' : gender === 'female' ? 'female' : null
   let profilePrefix = ''
@@ -154,92 +156,81 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
 
   const PROMPT = profilePrefix + BASE_PROMPT
 
-  // Build parts array — include face + tongue + lips if captured
+  // Build content array — images first, then text prompt
   const SCAN_PRIORITY = ['face', 'tongue', 'lips', 'eyes', 'sclera', 'skin']
-  const imageParts = []
+  const contentParts = []
 
   for (const key of SCAN_PRIORITY) {
     const entry = scanData[key]
     if (!entry?.image || entry.skipped) continue
-    const base64 = entry.image.replace(/^data:image\/\w+;base64,/, '')
-    imageParts.push({ inlineData: { mimeType: 'image/jpeg', data: base64 } })
-    if (imageParts.length >= 3) break   // 3 images is plenty for Gemini 2.5 Flash
+    // OpenAI accepts base64 as a data URI in image_url
+    contentParts.push({
+      type: 'image_url',
+      image_url: { url: entry.image, detail: 'high' },
+    })
+    if (contentParts.length >= 3) break
   }
 
-  if (imageParts.length === 0) throw new Error('No images available to analyse')
+  if (contentParts.length === 0) throw new Error('No images available to analyse')
+
+  contentParts.push({ type: 'text', text: PROMPT })
 
   const body = {
-    contents: [{
-      parts: [
-        ...imageParts,
-        { text: PROMPT },
-      ],
-    }],
-    generationConfig: {
-      temperature:     0.15,
-      topP:            0.8,
-      maxOutputTokens: 1024,
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-    ],
+    model: MODEL,
+    messages: [{ role: 'user', content: contentParts }],
+    max_tokens: 1024,
+    temperature: 0.15,
   }
 
   const res = await fetch(API_URL, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}))
     const msg = errBody?.error?.message || `HTTP ${res.status}`
-    console.error('[Gemini] API error:', res.status, errBody)
+    console.error('[OpenAI] API error:', res.status, errBody)
     throw new GeminiError(msg, res.status, errBody)
   }
 
   const data = await res.json()
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+  const rawText = data?.choices?.[0]?.message?.content ?? ''
 
-  // Extract JSON block — Gemini sometimes wraps it in markdown fences
+  // Extract JSON — strip markdown fences if present
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error(`Gemini returned no JSON.\n\nRaw response:\n${rawText.slice(0, 400)}`)
+  if (!jsonMatch) throw new Error(`OpenAI returned no JSON.\n\nRaw response:\n${rawText.slice(0, 400)}`)
 
   return JSON.parse(jsonMatch[0])
 }
 
-// ── Map Gemini result → condition objects from health-data.json ───────────────
+// ── Map result → condition objects from health-data.json ─────────────────────
 export function mapToConditions(geminiResult, allConditions) {
   const ids = new Set()
 
-  // 1. Explicit boolean flags
   for (const { path, id } of FLAG_MAP) {
     if (getPath(geminiResult, path) === true) ids.add(id)
   }
 
-  // 2. Acne — only add if moderate or severe
   const acne = geminiResult?.skin?.acne
   if (acne === 'moderate' || acne === 'severe') ids.add('acne')
 
-  // 3. Any IDs Gemini itself suggested (best-effort)
   for (const id of (geminiResult?.detectedConditions ?? [])) {
     if (typeof id === 'string') ids.add(id)
   }
 
-  // Resolve to full condition objects
   let detected = allConditions.filter(c => ids.has(c.id))
 
-  // Fallback: if nothing matched but Gemini has a severity, return 1 demo condition
   if (detected.length === 0) {
     const sev = geminiResult?.severity ?? 'low'
     const fallback = allConditions.find(c => c.severity === sev)
     if (fallback) detected = [fallback]
   }
 
-  // Cap at 4 conditions; sort so highest severity shows first
   const ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
   return detected
     .sort((a, b) => (ORDER[a.severity] ?? 9) - (ORDER[b.severity] ?? 9))
