@@ -22,7 +22,8 @@ const SYSTEM_PROMPT = `You are a visual wellness screening assistant for a perso
 
 const BASE_PROMPT = `Analyze the facial image(s) and complete the following JSON observation form.
 
-IMPORTANT: If no clear human face is visible (camera covered, blank/dark image, only background), return exactly: {"faceDetected": false}
+CRITICAL: If the image is very dark, black, blurry, obstructed, a plain surface, background only, or does NOT contain a clear human face — you MUST return ONLY this exact JSON and nothing else: {"faceDetected": false}
+Do NOT attempt to analyse, guess, or describe any image that does not clearly show a human face.
 
 Otherwise, observe what is visually present and return this JSON (replace all placeholders with actual values):
 

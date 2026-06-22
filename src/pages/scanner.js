@@ -712,11 +712,16 @@ function imageHasContent(canvas) {
 
   // Compute mean colour (every 8th pixel)
   let count = 0, sumR = 0, sumG = 0, sumB = 0
-  for (let i = 0; i < data.length; i += 32) {   // step 8 pixels (4 bytes × 8)
+  for (let i = 0; i < data.length; i += 32) {
     sumR += data[i]; sumG += data[i + 1]; sumB += data[i + 2]; count++
   }
-  if (count === 0) return true   // can't determine — allow
+  if (count === 0) return true
+
   const avgR = sumR / count, avgG = sumG / count, avgB = sumB / count
+  const brightness = (avgR + avgG + avgB) / 3
+
+  // Very dark → camera covered/blocked. Very bright → lens washed out.
+  if (brightness < 30 || brightness > 235) return false
 
   // Compute Mean Absolute Deviation
   let mad = 0
@@ -725,8 +730,8 @@ function imageHasContent(canvas) {
   }
   mad /= count
 
-  // MAD < 15 → very uniform image (covered lens, dark room, blank wall)
-  return mad > 15
+  // Low MAD → uniform image (covered lens, blank wall, solid colour)
+  return mad > 20
 }
 
 function showNoFaceWarning() {
