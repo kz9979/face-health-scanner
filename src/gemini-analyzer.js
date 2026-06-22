@@ -18,11 +18,13 @@ const CONDITION_NAMES = {
   allergies:    'Allergies',
 }
 
-const BASE_PROMPT = `You are a medical diagnostic AI. Analyze the submitted face image(s) for health conditions.
+const BASE_PROMPT = `You are a visual wellness screening assistant for educational awareness purposes only. This is NOT medical diagnosis — it is a self-awareness tool to help users notice visible facial indicators they may want to discuss with a healthcare professional.
+
+Analyze the submitted face image(s) and observe visible physical indicators. For educational reference only.
 
 IMPORTANT: If no clear human face is visible in any image (e.g. the camera was covered, the image is blank, dark, or shows only a wall/background), return {"faceDetected": false} and nothing else.
 
-Check for these specific signs:
+Observe and note these visible indicators:
 
 **EYES:**
 - Yellow color in whites of eyes (jaundice)
@@ -92,7 +94,8 @@ Return analysis in strict JSON format:
   "existingConditionNotes": "If existing conditions were disclosed: note which visual findings are consistent with those conditions vs which appear to be new, unrelated findings. Use plain language. Empty string if no existing conditions were provided."
 }
 
-Only include conditions you can see with reasonable confidence (>0.6). If unsure, mark as false.
+Only report indicators you can clearly observe with reasonable confidence (>0.6). If unsure, mark as false.
+This output is for educational self-awareness only and does not constitute medical advice.
 Respond with ONLY the JSON object — no markdown fences, no extra text.`
 
 // ── Map OpenAI boolean flags → condition IDs ──────────────────────────────────
