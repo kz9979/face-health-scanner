@@ -166,6 +166,14 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
             </div>
             ${geminiResult.notes ? `
             <p class="text-xs text-slate-300 leading-relaxed border-t border-white/5 pt-3">${geminiResult.notes}</p>` : ''}
+            ${geminiResult.existingConditionNotes ? `
+            <div class="flex gap-2 items-start border-t border-white/5 pt-3">
+              <span class="text-sm shrink-0">🏷️</span>
+              <div>
+                <p class="text-xs font-semibold text-amber-300 mb-1">${t('existingNotesLabel')}</p>
+                <p class="text-xs text-slate-400 leading-relaxed">${geminiResult.existingConditionNotes}</p>
+              </div>
+            </div>` : ''}
             ${geminiResult.tongue?.color && geminiResult.tongue.color !== 'pink' ? `
             <div class="flex items-center gap-2 text-xs">
               <span class="text-slate-500">${t('tongueTcm')}</span>

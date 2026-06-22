@@ -56,6 +56,13 @@ const T = {
     btnContinue:    'Teruskan →',
     ageError:       'Sila masukkan umur yang sah (1–120).',
     genderError:    'Sila pilih jantina anda.',
+    // Medical conditions multi-select
+    conditionsLabel:   'Keadaan Perubatan Sedia Ada',
+    conditionsOptional:'(Pilihan — pilih semua yang berkenaan)',
+    conditionsNoneOpt: 'Tiada',
+    conditionsOtherOpt:'Lain-lain',
+    conditionsOtherPh: 'Nyatakan keadaan lain...',
+    existingNotesLabel:'Nota Keadaan Sedia Ada:',
     // Face detection errors
     noFaceTitle:    'Tiada Wajah Dikesan',
     noFaceMsg:      'Pastikan kamera dihidupkan dan wajah anda kelihatan jelas dalam bingkai. Cuba semula dengan pencahayaan yang mencukupi.',
@@ -242,6 +249,13 @@ const T = {
     btnContinue:    'Continue →',
     ageError:       'Please enter a valid age (1–120).',
     genderError:    'Please select a gender.',
+    // Medical conditions multi-select
+    conditionsLabel:   'Existing Medical Conditions',
+    conditionsOptional:'(Optional — select all that apply)',
+    conditionsNoneOpt: 'None',
+    conditionsOtherOpt:'Other',
+    conditionsOtherPh: 'Please specify...',
+    existingNotesLabel:'Existing Condition Notes:',
     // Face detection errors
     noFaceTitle:    'No Face Detected',
     noFaceMsg:      'Please ensure your camera is on and your face is clearly visible in the frame. Try again with adequate lighting.',

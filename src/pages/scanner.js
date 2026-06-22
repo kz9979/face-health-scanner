@@ -36,6 +36,20 @@ function flattenConditions() {
 }
 const ALL_CONDITIONS = flattenConditions()
 
+// ── Medical conditions for intake form ────────────────────────────────────────
+const MED_CONDITIONS = [
+  { id: 'diabetes',     bm: 'Kencing Manis',          en: 'Diabetes'            },
+  { id: 'hypertension', bm: 'Tekanan Darah Tinggi',   en: 'High Blood Pressure' },
+  { id: 'lupus',        bm: 'Lupus',                  en: 'Lupus'               },
+  { id: 'thyroid',      bm: 'Penyakit Tiroid',        en: 'Thyroid Disorder'    },
+  { id: 'eczema',       bm: 'Ekzema / Psoriasis',     en: 'Eczema / Psoriasis'  },
+  { id: 'heart',        bm: 'Penyakit Jantung',       en: 'Heart Disease'       },
+  { id: 'liver',        bm: 'Penyakit Hati',          en: 'Liver Disease'       },
+  { id: 'kidney',       bm: 'Penyakit Buah Pinggang', en: 'Kidney Disease'      },
+  { id: 'anaemia',      bm: 'Anemia',                 en: 'Anaemia'             },
+  { id: 'allergies',    bm: 'Alahan',                 en: 'Allergies'           },
+]
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 export function renderScanner(container) {
   _appContainer   = container
@@ -45,13 +59,24 @@ export function renderScanner(container) {
   scanData    = {}
   captured    = {}
   direction   = 'forward'
-  userProfile = { age: null, gender: null }
-  renderAgeGender(container)  // age/gender form always shown first
+  userProfile = { age: null, gender: null, conditions: [], conditionsOther: '' }
+  renderAgeGender(container)  // intake form always shown first
 }
 
-// ── Age / Gender form ─────────────────────────────────────────────────────────
-function renderAgeGender(container) {
+// ── Intake form (age / gender / existing conditions) ─────────────────────────
+function renderAgeGender(container, saved = {}) {
   _appContainer = container
+  const lang = getLang()
+
+  // Chip style helpers
+  const chipOn  = 'cond-chip px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 border-cyan-500 bg-cyan-500/15 text-cyan-300'
+  const chipOff = 'cond-chip px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 border-slate-700 bg-slate-800 text-slate-400'
+
+  // Restore saved condition set (survives lang toggle)
+  const condSet = new Set(saved.conditions ?? ['none'])
+
+  function chipClass(id) { return condSet.has(id) ? chipOn : chipOff }
+
   container.innerHTML = `
     <div class="flex flex-col min-h-dvh bg-gradient-to-b from-[#0f0f1a] to-[#0d1a2e] fade-in">
 
@@ -73,15 +98,15 @@ function renderAgeGender(container) {
         </button>
       </header>
 
-      <main class="flex-1 flex flex-col items-center justify-center px-4 pb-8">
-        <div class="w-full max-w-sm flex flex-col gap-6">
+      <main class="flex-1 overflow-y-auto px-4 py-6">
+        <div class="w-full max-w-sm mx-auto flex flex-col gap-6">
 
           <div class="text-center">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-cyan-400/15 to-blue-600/15 border border-cyan-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-cyan-500/10">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-cyan-400/15 to-blue-600/15 border border-cyan-500/30 flex items-center justify-center text-2xl mb-3 shadow-lg shadow-cyan-500/10">
               📋
             </div>
-            <h2 class="text-xl font-bold text-white">${t('ageGenderTitle')}</h2>
-            <p class="text-slate-400 text-sm mt-2 leading-relaxed">${t('ageGenderSub')}</p>
+            <h2 class="text-lg font-bold text-white">${t('ageGenderTitle')}</h2>
+            <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">${t('ageGenderSub')}</p>
           </div>
 
           <div class="flex flex-col gap-5">
@@ -91,7 +116,8 @@ function renderAgeGender(container) {
               <label class="text-sm font-semibold text-slate-300">${t('ageLabel')}</label>
               <input id="age-input" type="number" min="1" max="120"
                 placeholder="${t('agePlaceholder')}"
-                class="w-full px-4 py-3.5 rounded-2xl bg-slate-800 border border-slate-700/80 text-white text-sm
+                value="${saved.age ?? ''}"
+                class="w-full px-4 py-3 rounded-2xl bg-slate-800 border border-slate-700/80 text-white text-sm
                        placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40
                        transition-colors"/>
               <p id="age-error" class="hidden text-xs text-red-400 px-1">${t('ageError')}</p>
@@ -103,8 +129,9 @@ function renderAgeGender(container) {
               <div class="grid grid-cols-3 gap-2">
                 ${['male', 'female', 'none'].map(v => `
                 <label class="relative cursor-pointer select-none">
-                  <input type="radio" name="gender" value="${v}" class="sr-only peer"/>
-                  <div class="py-3 px-1 rounded-xl border border-slate-700 bg-slate-800 text-center text-xs font-semibold text-slate-400
+                  <input type="radio" name="gender" value="${v}" class="sr-only peer"
+                    ${saved.gender === v ? 'checked' : ''}/>
+                  <div class="py-2.5 px-1 rounded-xl border border-slate-700 bg-slate-800 text-center text-xs font-semibold text-slate-400
                               peer-checked:border-cyan-500 peer-checked:bg-cyan-500/15 peer-checked:text-cyan-300
                               hover:border-slate-600 transition-all duration-150 active:scale-95">
                     ${v === 'male' ? t('genderMale') : v === 'female' ? t('genderFemale') : t('genderNone')}
@@ -114,9 +141,30 @@ function renderAgeGender(container) {
               <p id="gender-error" class="hidden text-xs text-red-400 px-1">${t('genderError')}</p>
             </div>
 
+            <!-- Existing medical conditions -->
+            <div class="flex flex-col gap-2">
+              <div>
+                <label class="text-sm font-semibold text-slate-300">${t('conditionsLabel')}</label>
+                <span class="block text-xs text-slate-500 mt-0.5">${t('conditionsOptional')}</span>
+              </div>
+              <div id="cond-grid" class="flex flex-wrap gap-2">
+                <button type="button" data-cid="none" class="${chipClass('none')}">${t('conditionsNoneOpt')}</button>
+                ${MED_CONDITIONS.map(c => `
+                <button type="button" data-cid="${c.id}" class="${chipClass(c.id)}">
+                  ${lang === 'bm' ? c.bm : c.en}
+                </button>`).join('')}
+                <button type="button" data-cid="other" class="${chipClass('other')}">${t('conditionsOtherOpt')}</button>
+              </div>
+              <input id="cond-other-input" type="text"
+                placeholder="${t('conditionsOtherPh')}"
+                value="${saved.other ?? ''}"
+                class="${condSet.has('other') ? '' : 'hidden'} w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700/80 text-white text-xs
+                       placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 transition-colors mt-1"/>
+            </div>
+
             <!-- Continue -->
             <button id="continue-btn"
-              class="w-full py-4 rounded-2xl font-bold text-base text-white mt-1
+              class="w-full py-4 rounded-2xl font-bold text-base text-white
                      bg-gradient-to-r from-cyan-500 to-blue-600
                      shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
                      flex items-center justify-center gap-2">
@@ -129,11 +177,44 @@ function renderAgeGender(container) {
     </div>
   `
 
-  document.getElementById('lang-toggle')?.addEventListener('click', () => {
-    setLang(getLang() === 'bm' ? 'en' : 'bm')
-    renderAgeGender(container)
+  // ── Condition chip logic ──────────────────────────────────────────────────
+  function refreshChips() {
+    document.querySelectorAll('.cond-chip').forEach(btn => {
+      btn.className = condSet.has(btn.dataset.cid) ? chipOn : chipOff
+    })
+    const otherInput = document.getElementById('cond-other-input')
+    if (otherInput) otherInput.classList.toggle('hidden', !condSet.has('other'))
+  }
+
+  document.querySelectorAll('.cond-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cid = btn.dataset.cid
+      if (cid === 'none') {
+        condSet.clear()
+        condSet.add('none')
+      } else {
+        condSet.delete('none')
+        if (condSet.has(cid)) {
+          condSet.delete(cid)
+          if (condSet.size === 0) condSet.add('none')
+        } else {
+          condSet.add(cid)
+        }
+      }
+      refreshChips()
+    })
   })
 
+  // ── Lang toggle — preserve all form state ────────────────────────────────
+  document.getElementById('lang-toggle')?.addEventListener('click', () => {
+    const age    = document.getElementById('age-input')?.value ?? ''
+    const gender = document.querySelector('input[name="gender"]:checked')?.value ?? null
+    const other  = document.getElementById('cond-other-input')?.value ?? ''
+    setLang(getLang() === 'bm' ? 'en' : 'bm')
+    renderAgeGender(container, { age, gender, conditions: condSet, other })
+  })
+
+  // ── Field error dismissal ────────────────────────────────────────────────
   document.getElementById('age-input')?.addEventListener('input', () =>
     document.getElementById('age-error')?.classList.add('hidden'))
 
@@ -141,6 +222,7 @@ function renderAgeGender(container) {
     r.addEventListener('change', () =>
       document.getElementById('gender-error')?.classList.add('hidden')))
 
+  // ── Continue ─────────────────────────────────────────────────────────────
   document.getElementById('continue-btn')?.addEventListener('click', () => {
     const ageVal    = parseInt(document.getElementById('age-input')?.value ?? '')
     const genderVal = document.querySelector('input[name="gender"]:checked')?.value
@@ -156,7 +238,10 @@ function renderAgeGender(container) {
     }
     if (!valid) return
 
-    userProfile = { age: ageVal, gender: genderVal }
+    const otherText   = document.getElementById('cond-other-input')?.value?.trim() ?? ''
+    const conditions  = [...condSet].filter(c => c !== 'none')   // empty if only 'none' was selected
+
+    userProfile = { age: ageVal, gender: genderVal, conditions, conditionsOther: otherText }
     renderStep(container)
   })
 }

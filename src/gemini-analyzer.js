@@ -3,6 +3,20 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const API_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`
 
+// Human-readable names for condition IDs (used in prompt context)
+const CONDITION_NAMES = {
+  diabetes:     'Diabetes',
+  hypertension: 'High Blood Pressure',
+  lupus:        'Lupus',
+  thyroid:      'Thyroid Disorder',
+  eczema:       'Eczema / Psoriasis',
+  heart:        'Heart Disease',
+  liver:        'Liver Disease',
+  kidney:       'Kidney Disease',
+  anaemia:      'Anaemia',
+  allergies:    'Allergies',
+}
+
 const BASE_PROMPT = `You are a medical diagnostic AI. Analyze the submitted face image(s) for health conditions.
 
 IMPORTANT: If no clear human face is visible in any image (e.g. the camera was covered, the image is blank, dark, or shows only a wall/background), return {"faceDetected": false} and nothing else.
@@ -73,7 +87,8 @@ Return analysis in strict JSON format:
   "detectedConditions": ["condition_id_1", "condition_id_2"],
   "severity": "low/medium/high/critical",
   "confidence": 0.0,
-  "notes": "Brief explanation of findings"
+  "notes": "Brief explanation of findings",
+  "existingConditionNotes": "If existing conditions were disclosed: note which visual findings are consistent with those conditions vs which appear to be new, unrelated findings. Use plain language. Empty string if no existing conditions were provided."
 }
 
 Only include conditions you can see with reasonable confidence (>0.6). If unsure, mark as false.`
@@ -107,22 +122,34 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
   const maskedKey = `${API_KEY.slice(0, 6)}…${API_KEY.slice(-4)}`
   console.log(`[Gemini] Key: ${maskedKey} | URL: ${API_URL.replace(API_KEY, maskedKey)}`)
 
-  // Build age/gender context prefix for the prompt
-  const { age, gender } = userProfile
+  // Build patient context prefix for the prompt
+  const { age, gender, conditions = [], conditionsOther = '' } = userProfile
   const genderLabel = gender === 'male' ? 'male' : gender === 'female' ? 'female' : null
   let profilePrefix = ''
+
   if (age || genderLabel) {
-    profilePrefix = 'Patient demographics: '
-    if (age)         profilePrefix += `${age} years old`
-    if (age && genderLabel) profilePrefix += ', '
-    if (genderLabel) profilePrefix += genderLabel
-    profilePrefix += '.\n'
-    profilePrefix += 'Consider only age- and gender-appropriate conditions. '
-    if (genderLabel === 'male')   profilePrefix += 'Exclude female-specific conditions (e.g. pregnancy-related, menstruation). '
-    if (genderLabel === 'female') profilePrefix += 'Include female-specific conditions where relevant. '
-    if (age && age < 18)  profilePrefix += 'Focus on paediatric/adolescent presentations. '
-    if (age && age > 60)  profilePrefix += 'Consider age-related degenerative and vascular presentations. '
-    profilePrefix += '\n\n'
+    profilePrefix += 'PATIENT DEMOGRAPHICS:\n'
+    if (age)         profilePrefix += `- Age: ${age} years old\n`
+    if (genderLabel) profilePrefix += `- Gender: ${genderLabel}\n`
+    profilePrefix += 'Apply age- and gender-appropriate clinical reasoning:\n'
+    if (genderLabel === 'male')   profilePrefix += '  • Exclude female-specific conditions (pregnancy, menstruation-related).\n'
+    if (genderLabel === 'female') profilePrefix += '  • Include female-specific conditions where clinically relevant.\n'
+    if (age && age < 18)  profilePrefix += '  • Focus on paediatric/adolescent presentations.\n'
+    if (age && age > 60)  profilePrefix += '  • Consider age-related degenerative and vascular presentations.\n'
+    profilePrefix += '\n'
+  }
+
+  if (conditions.length > 0) {
+    const condList = conditions.map(c => {
+      if (c === 'other') return conditionsOther || 'Other (unspecified)'
+      return CONDITION_NAMES[c] || c
+    }).join(', ')
+    profilePrefix += `DISCLOSED EXISTING CONDITIONS: ${condList}\n`
+    profilePrefix += 'Interpretation rules for existing conditions:\n'
+    profilePrefix += '  1. If a visual finding is expected or consistent with a disclosed condition, note it as "consistent with [condition name]" — do not flag it as a new alarming finding.\n'
+    profilePrefix += '  2. If a finding appears unrelated to any disclosed condition, flag it explicitly as a "new finding" requiring separate medical attention.\n'
+    profilePrefix += '  3. Do not re-diagnose disclosed conditions unless you see signs of complications, worsening, or new comorbidities.\n'
+    profilePrefix += '  4. Populate the "existingConditionNotes" field to clearly distinguish related vs new findings.\n\n'
   }
 
   const PROMPT = profilePrefix + BASE_PROMPT
