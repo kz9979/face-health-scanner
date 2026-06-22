@@ -1157,10 +1157,20 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
 function speak(text) {
   if (!window.speechSynthesis) return
   speechSynthesis.cancel()
+
+  const lang   = getLang()
+  const prefix = lang === 'bm' ? 'ms' : 'en'
+  const voices = speechSynthesis.getVoices()
+  const voice  = voices.find(v => v.lang.toLowerCase().startsWith(prefix)) ?? null
+
+  // No Malay voice installed → skip TTS rather than mispronounce with an English voice
+  if (lang === 'bm' && !voice) return
+
   const u  = new SpeechSynthesisUtterance(text)
-  u.lang   = getLang() === 'bm' ? 'ms-MY' : 'en-US'
+  u.lang   = lang === 'bm' ? 'ms-MY' : 'en-US'
   u.rate   = 0.88
   u.pitch  = 1.05
+  if (voice) u.voice = voice
   speechSynthesis.speak(u)
 }
 
