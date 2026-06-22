@@ -3,7 +3,6 @@ import healthData from '../../health-data.json'
 import { t, getLang, setLang } from '../i18n.js'
 
 const ACTION   = healthData.actionLevels
-const FACE_MAP = healthData.faceMapping.tcm
 
 // Bilingual helpers (re-evaluated on each render so they pick up lang changes)
 const getDaily      = () => t('dailyTips')          // i18n.js holds EN; BM array is same
@@ -193,9 +192,6 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
             ${detected.map((c, i) => renderConditionCard(c, i, SEV)).join('')}
           </div>
 
-          <!-- TCM Face Map -->
-          ${renderFaceMapSection()}
-
           <!-- Daily tips -->
           ${renderDailySection()}
 
@@ -249,17 +245,6 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
     })
   })
 
-  // Face map toggle
-  const fmToggle  = document.getElementById('facemap-toggle')
-  const fmBody    = document.getElementById('facemap-body')
-  const fmChevron = document.getElementById('facemap-chevron')
-  if (fmToggle && fmBody) {
-    fmToggle.addEventListener('click', () => {
-      const open = !fmBody.classList.contains('hidden')
-      fmBody.classList.toggle('hidden', open)
-      fmChevron.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)'
-    })
-  }
 }
 
 // ── Condition card ────────────────────────────────────────────────────────────
@@ -297,93 +282,10 @@ function renderConditionCard(c, i, SEV) {
           <span class="text-xs text-slate-500 shrink-0">${getActTime(c.severity)}</span>
         </div>
 
-        ${renderTcmSection(c)}
         ${renderModernSection(c)}
         ${renderTestsSection(c)}
         ${renderRecsSection(c, s)}
 
-      </div>
-    </div>
-  `
-}
-
-// ── TCM section ───────────────────────────────────────────────────────────────
-
-function renderTcmSection(c) {
-  const tcm = c.tcm
-  if (!tcm) return ''
-
-  if (c.id === 'acne') {
-    return `
-      <div class="p-4 flex flex-col gap-3">
-        <div class="flex items-center gap-2">
-          <span class="text-sm">🏮</span>
-          <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider">${t('tcmFaceMap')}</p>
-        </div>
-        <p class="text-xs text-slate-500 leading-relaxed">${t('acneNote')}</p>
-        <div class="grid grid-cols-2 gap-2">
-          ${tcm.forehead ? `
-          <div class="col-span-2 p-3 rounded-xl bg-slate-900/60 border border-amber-500/20">
-            <p class="text-xs font-semibold text-amber-300 mb-1">${t('lbl_forehead')}</p>
-            <p class="text-xs text-slate-400 font-medium">${tcm.forehead.organ}</p>
-            <p class="text-xs text-slate-500 mt-0.5">${tcm.forehead.cause}</p>
-          </div>` : ''}
-          ${tcm.cheeks ? `
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-amber-500/20">
-            <p class="text-xs font-semibold text-amber-300 mb-1">${t('lbl_leftCheek')}</p>
-            <p class="text-xs text-slate-400">${tcm.cheeks.left}</p>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-amber-500/20">
-            <p class="text-xs font-semibold text-amber-300 mb-1">${t('lbl_rightCheek')}</p>
-            <p class="text-xs text-slate-400">${tcm.cheeks.right}</p>
-          </div>
-          <div class="col-span-2 px-3 py-1.5 rounded-lg bg-amber-500/5 border border-amber-500/10">
-            <p class="text-xs text-slate-500">${tcm.cheeks.cause}</p>
-          </div>` : ''}
-          ${tcm.chin ? `
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-amber-500/20">
-            <p class="text-xs font-semibold text-amber-300 mb-1">${t('lbl_chin')}</p>
-            <p class="text-xs text-slate-400 font-medium">${tcm.chin.organ}</p>
-            <p class="text-xs text-slate-500 mt-0.5">${tcm.chin.cause}</p>
-          </div>` : ''}
-          ${tcm.nose ? `
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-amber-500/20">
-            <p class="text-xs font-semibold text-amber-300 mb-1">${t('lbl_nose')}</p>
-            <p class="text-xs text-slate-400 font-medium">${tcm.nose.organ}</p>
-            <p class="text-xs text-slate-500 mt-0.5">${tcm.nose.cause}</p>
-          </div>` : ''}
-        </div>
-      </div>
-    `
-  }
-
-  return `
-    <div class="p-4 flex flex-col gap-3">
-      <div class="flex items-center gap-2">
-        <span class="text-sm">🏮</span>
-        <p class="text-xs font-semibold text-slate-300 uppercase tracking-wider">${t('tcmHeader')}</p>
-      </div>
-      <div class="flex flex-col gap-2">
-        ${tcm.organ ? `
-        <div class="flex gap-2 items-start">
-          <span class="text-xs text-slate-500 shrink-0 w-20 pt-0.5">${t('tcmOrgan')}</span>
-          <span class="text-xs text-amber-300 font-semibold">${tcm.organ}</span>
-        </div>` : ''}
-        ${tcm.diagnosis ? `
-        <div class="flex gap-2 items-start">
-          <span class="text-xs text-slate-500 shrink-0 w-20 pt-0.5">${t('tcmDiag')}</span>
-          <span class="text-xs text-slate-300">${tcm.diagnosis}</span>
-        </div>` : ''}
-        ${tcm.cause ? `
-        <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700/40">
-          <p class="text-xs text-slate-500 font-medium mb-1">${t('tcmCause')}</p>
-          <p class="text-xs text-slate-400 leading-relaxed">${tcm.cause}</p>
-        </div>` : ''}
-        ${tcm.treatment ? `
-        <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <p class="text-xs text-slate-500 font-medium mb-1">${t('tcmTreat')}</p>
-          <p class="text-xs text-amber-300 leading-relaxed">${tcm.treatment}</p>
-        </div>` : ''}
       </div>
     </div>
   `
@@ -509,56 +411,6 @@ function renderRecsSection(c, s) {
           <span class="text-xs text-slate-300 leading-relaxed">${r}</span>
         </li>`).join('')}
       </ul>
-    </div>
-  `
-}
-
-// ── TCM Face Map ──────────────────────────────────────────────────────────────
-
-function renderFaceMapSection() {
-  const lang = getLang()
-  const zones = [
-    { emoji: '⬆️', label: lang === 'bm' ? 'Dahi'          : 'Forehead',       data: FACE_MAP.forehead },
-    { emoji: '◀▶', label: lang === 'bm' ? 'Pelipis'       : 'Temples',        data: FACE_MAP.temples },
-    { emoji: '🔸', label: lang === 'bm' ? 'Antara Kening' : 'Between Brows',  data: FACE_MAP.betweenEyebrows },
-    { emoji: '👁️', label: lang === 'bm' ? 'Bawah Mata'    : 'Under Eyes',     data: FACE_MAP.underEyes },
-    { emoji: '👃', label: lang === 'bm' ? 'Hidung'        : 'Nose',           data: FACE_MAP.nose },
-    { emoji: '😊', label: lang === 'bm' ? 'Pipi Kiri'     : 'Left Cheek',     data: FACE_MAP.cheeks.left },
-    { emoji: '😊', label: lang === 'bm' ? 'Pipi Kanan'    : 'Right Cheek',    data: FACE_MAP.cheeks.right },
-    { emoji: '👄', label: lang === 'bm' ? 'Mulut'         : 'Mouth',          data: FACE_MAP.mouth },
-    { emoji: '⬇️', label: lang === 'bm' ? 'Dagu'          : 'Chin',           data: FACE_MAP.chin },
-    { emoji: '🔵', label: lang === 'bm' ? 'Leher'         : 'Neck',           data: FACE_MAP.neck },
-  ]
-
-  const rows = zones.map(z => {
-    const organs = Array.isArray(z.data.organs) ? z.data.organs.join(', ') : ''
-    const issues = z.data.issues || ''
-    return `
-      <div class="flex gap-3 items-start py-2.5 border-b border-white/5 last:border-0">
-        <span class="text-base shrink-0 w-6 text-center">${z.emoji}</span>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs font-semibold text-amber-300">${z.label}</p>
-          ${organs ? `<p class="text-xs text-slate-400">${organs}</p>` : ''}
-          ${issues ? `<p class="text-xs text-slate-500 mt-0.5">${issues}</p>` : ''}
-        </div>
-      </div>`
-  }).join('')
-
-  return `
-    <div class="rounded-2xl overflow-hidden border border-slate-700/50 bg-slate-800/30">
-      <button id="facemap-toggle" class="w-full flex items-center gap-3 p-4 text-left">
-        <span class="text-lg">🗺️</span>
-        <div class="flex-1">
-          <p class="text-sm font-semibold text-slate-200">${t('faceMapTitle')}</p>
-          <p class="text-xs text-slate-500">${t('faceMapSub')}</p>
-        </div>
-        <svg id="facemap-chevron" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-      <div id="facemap-body" class="hidden px-4 pb-4 flex flex-col">
-        ${rows}
-      </div>
     </div>
   `
 }

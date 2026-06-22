@@ -7,7 +7,7 @@ export const setLang = (l) => { _lang = l }
 const T = {
   bm: {
     // App
-    appSub: 'TCM & Perubatan Moden',
+    appSub: 'Analisis Kesihatan Muka',
     step: 'Langkah',
     // Step titles
     face_title:   'Imbasan Muka Penuh',
@@ -95,11 +95,11 @@ const T = {
     sending:         'Menghantar imej ke AI...',
     geminiDone:      'Analisis AI selesai ✓',
     parsing:         'Menganalisis keputusan AI...',
-    parsingSub:      'Memadankan tanda-tanda TCM',
+    parsingSub:      'Memproses keputusan analisis',
     eyesDone:        'Pengesan tanda mata selesai ✓',
     skinDone:        'Pengesan tanda kulit selesai ✓',
     lipsDone:        'Pengesan tanda bibir & lidah selesai ✓',
-    mapping:         'Memadankan data TCM & perubatan moden...',
+    mapping:         'Memadankan data perubatan...',
     compiling:       'Menyusun laporan kesihatan...',
     almostDone:      'Hampir selesai...',
     analysisDone:    'Analisis selesai! ✅',
@@ -122,7 +122,7 @@ const T = {
     scanDone:     'Imbasan 6-Langkah Selesai',
     geminiAI:     'Analisis AI',
     confidence:   'keyakinan',
-    tongueTcm:    'Lidah TCM:',
+    tongueTcm:    'Lidah:',
     noBadges:     'Tiada tanda klinikal ketara dikesan',
     demoNotice:   'Demo mode — tiada analisis AI sebenar digunakan',
     // Results — dynamic count strings (use {n} placeholder, replaced in code)
@@ -200,7 +200,7 @@ const T = {
 
   en: {
     // App
-    appSub: 'TCM & Modern Medicine',
+    appSub: 'Facial Health Analysis',
     step: 'Step',
     // Step titles
     face_title:   'Full Face Scan',
@@ -288,11 +288,11 @@ const T = {
     sending:         'Sending images to AI...',
     geminiDone:      'AI analysis complete ✓',
     parsing:         'Analyzing AI results...',
-    parsingSub:      'Matching TCM signs',
+    parsingSub:      'Processing analysis results',
     eyesDone:        'Eye indicator detection complete ✓',
     skinDone:        'Skin indicator detection complete ✓',
     lipsDone:        'Lips & tongue detection complete ✓',
-    mapping:         'Matching TCM & modern medicine data...',
+    mapping:         'Matching medical data...',
     compiling:       'Compiling health report...',
     almostDone:      'Almost done...',
     analysisDone:    'Analysis complete! ✅',
@@ -315,7 +315,7 @@ const T = {
     scanDone:     '6-Step Scan Complete',
     geminiAI:     'AI Health Analysis',
     confidence:   'confidence',
-    tongueTcm:    'TCM Tongue:',
+    tongueTcm:    'Tongue:',
     noBadges:     'No significant clinical signs detected',
     demoNotice:   'Demo mode — no real AI analysis used',
     // Results — dynamic count strings
