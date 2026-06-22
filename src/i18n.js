@@ -71,6 +71,7 @@ const T = {
     noFaceMsg:      'Pastikan kamera dihidupkan dan wajah anda kelihatan jelas dalam bingkai. Cuba semula dengan pencahayaan yang mencukupi.',
     noFaceImagesMsg:'Tiada imej wajah yang sah ditemui dalam imbasan ini. Sila imbas semula dan pastikan wajah anda kelihatan jelas.',
     faceOk:         'Wajah Dikesan',
+    cameraActive:   'Kamera Aktif',
     // Buttons
     btnNext:        'Seterusnya →',
     btnAnalyze:     '🔬 Analisis Kesihatan',
@@ -265,6 +266,7 @@ const T = {
     noFaceMsg:      'Please ensure your camera is on and your face is clearly visible in the frame. Try again with adequate lighting.',
     noFaceImagesMsg:'No valid face images were found in this scan. Please retake the scan with your face clearly visible.',
     faceOk:         'Face Detected',
+    cameraActive:   'Camera Active',
     // Buttons
     btnNext:        'Next →',
     btnAnalyze:     '🔬 Analyze Health',

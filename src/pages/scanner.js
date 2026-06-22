@@ -667,7 +667,8 @@ function startLiveDetection() {
       offscreen.width = 160; offscreen.height = 120
       offscreen.getContext('2d').drawImage(vid, 0, 0, 160, 120)
 
-      let ok = imageHasContent(offscreen)
+      let ok            = imageHasContent(offscreen)
+      let faceConfirmed = false   // only true when FaceDetector explicitly finds a face
 
       if (ok && 'FaceDetector' in window) {
         const stepKey = getSteps()[step]?.key
@@ -677,21 +678,26 @@ function startLiveDetection() {
             const bmp  = await createImageBitmap(offscreen)
             const hits = await det.detect(bmp)
             bmp.close()
-            ok = hits.length > 0
+            ok            = hits.length > 0
+            faceConfirmed = ok
           } catch { /* FaceDetector unavailable — trust pixel check */ }
         }
       }
 
       badge.classList.remove('hidden')
-      badge.innerHTML = ok
-        ? `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/75 backdrop-blur-sm shadow">
-             <div class="w-1.5 h-1.5 rounded-full bg-green-200"></div>
-             <span class="text-[11px] text-white font-semibold">${t('faceOk')}</span>
-           </div>`
-        : `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/80 backdrop-blur-sm shadow">
+      if (!ok) {
+        badge.innerHTML = `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/80 backdrop-blur-sm shadow">
              <div class="w-1.5 h-1.5 rounded-full bg-amber-200"></div>
              <span class="text-[11px] text-white font-semibold">${t('noFaceTitle')}</span>
            </div>`
+      } else {
+        // faceConfirmed → FaceDetector found a face; otherwise just pixel check (camera active)
+        const label = faceConfirmed ? t('faceOk') : t('cameraActive')
+        badge.innerHTML = `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/75 backdrop-blur-sm shadow">
+             <div class="w-1.5 h-1.5 rounded-full bg-green-200"></div>
+             <span class="text-[11px] text-white font-semibold">${label}</span>
+           </div>`
+      }
     } finally {
       _liveDetectPending = false
     }
