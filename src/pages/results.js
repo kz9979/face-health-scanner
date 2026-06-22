@@ -97,8 +97,8 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
             <div class="flex gap-4 items-start">
               <div class="relative shrink-0">
                 ${primaryImage
-                  ? `<img src="${primaryImage}" alt="scan" class="w-24 h-32 object-cover rounded-2xl border-2 border-cyan-500/40 shadow-lg shadow-cyan-500/20"/>`
-                  : `<div class="w-24 h-32 rounded-2xl border-2 border-cyan-500/40 bg-slate-800 flex items-center justify-center text-4xl">👤</div>`}
+                  ? `<img src="${primaryImage}" alt="scan" class="w-24 h-32 object-cover rounded-2xl border-2 border-[#2DD4BF]/40 shadow-lg shadow-[#C9956D]/20"/>`
+                  : `<div class="w-24 h-32 rounded-2xl border-2 border-[#2DD4BF]/40 bg-slate-800 flex items-center justify-center text-4xl">👤</div>`}
                 <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 border-2 border-[#0f0f1a] flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -127,7 +127,7 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
                 const meta = SCAN_LABELS[key] || { emoji: '📷', label: key }
                 return `
                   <div class="shrink-0 flex flex-col items-center gap-1">
-                    <div class="relative w-14 rounded-xl overflow-hidden border border-cyan-500/30" style="height:4.5rem">
+                    <div class="relative w-14 rounded-xl overflow-hidden border border-[#2DD4BF]/30" style="height:4.5rem">
                       <img src="${val.image}" class="w-full h-full object-cover" alt="${meta.label}"/>
                     </div>
                     <span class="text-xs text-slate-500 leading-none">${meta.emoji}</span>
@@ -147,15 +147,15 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
 
           <!-- Gemini AI insight card -->
           ${geminiResult ? `
-          <div class="rounded-2xl bg-gradient-to-br from-slate-800/80 to-blue-900/30 border border-blue-500/30 p-4 flex flex-col gap-3 slide-up">
+          <div class="rounded-2xl bg-gradient-to-br from-slate-800/80 to-[#0A1F3C]/60 border border-[#C9956D]/30 p-4 flex flex-col gap-3 slide-up">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-blue-600/30 flex items-center justify-center text-sm">🤖</div>
+              <div class="w-7 h-7 rounded-lg bg-[#C9956D]/25 flex items-center justify-center text-sm">🤖</div>
               <div class="flex-1">
-                <p class="text-xs font-bold text-blue-300">${t('geminiAI')}</p>
+                <p class="text-xs font-bold text-[#E0B990]">${t('geminiAI')}</p>
                 <p class="text-xs text-slate-500">${t('procSubLabel')}</p>
               </div>
-              <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30">
-                <span class="text-xs font-bold text-blue-300">${Math.round((geminiResult.confidence ?? 0) * 100)}%</span>
+              <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C9956D]/15 border border-[#C9956D]/30">
+                <span class="text-xs font-bold text-[#E0B990]">${Math.round((geminiResult.confidence ?? 0) * 100)}%</span>
                 <span class="text-xs text-slate-500">${t('confidence')}</span>
               </div>
             </div>
@@ -205,9 +205,9 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
           <!-- Scan again -->
           <button id="scan-again-btn"
             class="w-full py-4 rounded-2xl font-bold text-base text-white
-                   bg-gradient-to-r from-cyan-500 to-blue-600
-                   shadow-lg shadow-cyan-500/30 active:scale-95 transition-all
-                   duration-200 hover:shadow-cyan-500/50 hover:shadow-xl
+                   bg-gradient-to-r from-[#C9956D] to-[#A87B55]
+                   shadow-lg shadow-[#C9956D]/30 active:scale-95 transition-all
+                   duration-200 hover:shadow-[#C9956D]/50 hover:shadow-xl
                    flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -290,7 +290,7 @@ function renderModernSection(c) {
 
   const conditionBadge = `
     <div class="p-3 rounded-xl bg-blue-900/25 border border-blue-500/25">
-      <p class="text-xs text-blue-300 font-semibold">${m.condition}</p>
+      <p class="text-xs text-[#E0B990] font-semibold">${m.condition}</p>
     </div>
   `
 
@@ -436,7 +436,7 @@ function buildGeminiBadges(g) {
 
   if (g.eyes?.yellow)           add('Mata Kuning',       'Yellow Eyes',        'bg-yellow-500/20 text-yellow-300')
   if (g.eyes?.darkCircles)      add('Lingkaran Gelap',   'Dark Circles',       'bg-slate-600/40 text-slate-300')
-  if (g.eyes?.puffy)            add('Mata Bengkak',      'Puffy Eyes',         'bg-blue-500/20 text-blue-300')
+  if (g.eyes?.puffy)            add('Mata Bengkak',      'Puffy Eyes',         'bg-blue-500/20 text-[#E0B990]')
   if (g.eyes?.red)              add('Mata Merah',        'Red Eyes',           'bg-red-500/20 text-red-300')
   if (g.skin?.butterflyRash)    add('Ruam Rama-Rama',    'Butterfly Rash',     'bg-red-500/20 text-red-300')
   if (g.skin?.acne && g.skin.acne !== 'none')
@@ -447,7 +447,7 @@ function buildGeminiBadges(g) {
   if (g.lips?.pale)             add('Bibir Pucat',       'Pale Lips',          'bg-slate-500/20 text-slate-300')
   if (g.lips?.sores)            add('Luka Bibir',        'Cold Sores',         'bg-red-500/20 text-red-300')
   if (g.lips?.angularCheilitis) add('Sudut Bibir Pecah', 'Angular Cheilitis',  'bg-orange-500/20 text-orange-300')
-  if (g.face?.puffy)            add('Muka Bengkak',      'Puffy Face',         'bg-blue-500/20 text-blue-300')
+  if (g.face?.puffy)            add('Muka Bengkak',      'Puffy Face',         'bg-blue-500/20 text-[#E0B990]')
   if (g.face?.asymmetric)       add('Muka Tak Simetri',  'Facial Asymmetry',   'bg-red-500/20 text-red-300')
   if (g.face?.droopingEyelid)   add('Kelopak Turun',     'Drooping Eyelid',    'bg-orange-500/20 text-orange-300')
 

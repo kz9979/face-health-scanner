@@ -69,7 +69,7 @@ function renderAgeGender(container, saved = {}) {
   const lang = getLang()
 
   // Chip style helpers
-  const chipOn  = 'cond-chip px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 border-cyan-500 bg-cyan-500/15 text-cyan-300'
+  const chipOn  = 'cond-chip px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 border-[#2DD4BF] bg-[#2DD4BF]/15 text-[#2DD4BF]'
   const chipOff = 'cond-chip px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 border-slate-700 bg-slate-800 text-slate-400'
 
   // Restore saved condition set (survives lang toggle)
@@ -82,14 +82,14 @@ function renderAgeGender(container, saved = {}) {
 
       <header class="px-4 pt-4 pb-3 flex items-center justify-between border-b border-white/5">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shrink-0 shadow shadow-cyan-500/30">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E0B990] to-[#C9956D] flex items-center justify-center shrink-0 shadow shadow-[#C9956D]/30">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
           </div>
           <div>
             <p class="text-white font-bold text-sm leading-tight">Face Health Scanner</p>
-            <p class="text-xs text-cyan-400/80">${t('appSub')}</p>
+            <p class="text-xs text-[#E0B990]/80">${t('appSub')}</p>
           </div>
         </div>
       </header>
@@ -114,7 +114,7 @@ function renderAgeGender(container, saved = {}) {
                 placeholder="${t('agePlaceholder')}"
                 value="${saved.age ?? ''}"
                 class="w-full px-4 py-3 rounded-2xl bg-slate-800 border border-slate-700/80 text-white text-sm
-                       placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40
+                       placeholder-slate-600 focus:border-[#C9956D] focus:outline-none focus:ring-1 focus:ring-[#C9956D]/40
                        transition-colors"/>
               <p id="age-error" class="hidden text-xs text-red-400 px-1">${t('ageError')}</p>
             </div>
@@ -128,7 +128,7 @@ function renderAgeGender(container, saved = {}) {
                   <input type="radio" name="gender" value="${v}" class="sr-only peer"
                     ${saved.gender === v ? 'checked' : ''}/>
                   <div class="py-2.5 px-1 rounded-xl border border-slate-700 bg-slate-800 text-center text-xs font-semibold text-slate-400
-                              peer-checked:border-cyan-500 peer-checked:bg-cyan-500/15 peer-checked:text-cyan-300
+                              peer-checked:border-[#2DD4BF] peer-checked:bg-[#2DD4BF]/15 peer-checked:text-[#2DD4BF]
                               hover:border-slate-600 transition-all duration-150 active:scale-95">
                     ${v === 'male' ? t('genderMale') : v === 'female' ? t('genderFemale') : t('genderNone')}
                   </div>
@@ -155,14 +155,14 @@ function renderAgeGender(container, saved = {}) {
                 placeholder="${t('conditionsOtherPh')}"
                 value="${saved.other ?? ''}"
                 class="${condSet.has('other') ? '' : 'hidden'} w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700/80 text-white text-xs
-                       placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 transition-colors mt-1"/>
+                       placeholder-slate-600 focus:border-[#C9956D] focus:outline-none focus:ring-1 focus:ring-[#C9956D]/40 transition-colors mt-1"/>
             </div>
 
             <!-- Continue -->
             <button id="continue-btn"
               class="w-full py-4 rounded-2xl font-bold text-base text-white
-                     bg-gradient-to-r from-cyan-500 to-blue-600
-                     shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                     bg-gradient-to-r from-[#C9956D] to-[#A87B55]
+                     shadow-lg shadow-[#C9956D]/25 active:scale-95 transition-all
                      flex items-center justify-center gap-2">
               ${t('btnContinue')}
             </button>
@@ -250,7 +250,7 @@ function renderStep(container) {
       <!-- Header -->
       <header class="px-4 pt-4 pb-3 flex flex-col gap-2.5 border-b border-white/5">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shrink-0 shadow shadow-cyan-500/30">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E0B990] to-[#C9956D] flex items-center justify-center shrink-0 shadow shadow-[#C9956D]/30">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
@@ -261,7 +261,7 @@ function renderStep(container) {
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
             <button id="tts-btn" title="${t('listenBtn')}"
-              class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors active:scale-90">
+              class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-[#2DD4BF] transition-colors active:scale-90">
               🔊
             </button>
           </div>
@@ -269,7 +269,7 @@ function renderStep(container) {
 
         <!-- Progress bar -->
         <div class="relative h-1.5 bg-slate-800 rounded-full overflow-hidden">
-          <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+          <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-[#C9956D] to-[#2DD4BF] rounded-full transition-all duration-500"
                style="width:${pct}%"></div>
         </div>
 
@@ -278,7 +278,7 @@ function renderStep(container) {
           ${STEPS.map((_, i) => `
             <div class="rounded-full transition-all duration-300
                         ${i < step  ? 'w-5 h-2 bg-green-500' :
-                          i === step ? 'w-6 h-2 bg-cyan-400' :
+                          i === step ? 'w-6 h-2 bg-[#C9956D]' :
                                        'w-2 h-2 bg-slate-700'}">
             </div>`).join('')}
         </div>
@@ -288,8 +288,8 @@ function renderStep(container) {
       <main class="flex-1 flex flex-col items-center px-4 pt-3 pb-4 gap-3 overflow-y-auto">
 
         <div class="relative w-full max-w-sm shrink-0">
-          <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/15 to-blue-600/15 blur-xl -z-10"></div>
-          <div id="viewfinder" class="relative rounded-3xl overflow-hidden border-2 ${cap ? 'border-green-500/60' : 'border-cyan-500/40'} bg-[#111827] shadow-2xl" style="aspect-ratio:3/4;">
+          <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#C9956D]/10 to-[#2DD4BF]/10 blur-xl -z-10"></div>
+          <div id="viewfinder" class="relative rounded-3xl overflow-hidden border-2 ${cap ? 'border-green-500/60' : 'border-[#2DD4BF]/40'} bg-[#111827] shadow-2xl" style="aspect-ratio:3/4;">
 
             <video id="camera-video" class="absolute inset-0 w-full h-full object-cover ${cap ? 'opacity-30' : ''}"
                    autoplay playsinline muted></video>
@@ -312,7 +312,7 @@ function renderStep(container) {
                 <svg class="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="7"/>
                   <circle id="cd-circle" cx="50" cy="50" r="44" fill="none"
-                          stroke="#22d3ee" stroke-width="7" stroke-linecap="round"
+                          stroke="#2DD4BF" stroke-width="7" stroke-linecap="round"
                           stroke-dasharray="276.46" stroke-dashoffset="0"
                           style="transition: stroke-dashoffset 0.95s linear"/>
                 </svg>
@@ -335,7 +335,7 @@ function renderStep(container) {
 
             <!-- Camera loading -->
             <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-3 ${cap ? 'hidden' : ''}">
-              <div class="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent analyzing-spinner"></div>
+              <div class="w-8 h-8 rounded-full border-2 border-[#2DD4BF] border-t-transparent analyzing-spinner"></div>
               <p class="text-slate-400 text-xs">${t('cameraLoading')}</p>
             </div>
 
@@ -348,7 +348,7 @@ function renderStep(container) {
               </div>
               <p class="text-slate-300 text-xs font-semibold">${t('cameraDenied')}</p>
               <p class="text-slate-500 text-xs">${t('cameraDeniedSub')}</p>
-              <button id="retry-camera" class="px-4 py-2 text-xs font-bold rounded-full bg-cyan-600 text-white active:scale-95">${t('btnRetryCamera')}</button>
+              <button id="retry-camera" class="px-4 py-2 text-xs font-bold rounded-full bg-[#C9956D] text-white active:scale-95">${t('btnRetryCamera')}</button>
             </div>
 
           </div>
@@ -358,7 +358,7 @@ function renderStep(container) {
         <div class="w-full max-w-sm rounded-2xl bg-slate-800/60 border border-slate-700/40 p-4 flex flex-col gap-2">
           <p class="text-white text-sm font-semibold leading-snug">${s.inst}</p>
           <div class="flex items-start gap-2">
-            <span class="text-cyan-400 text-xs shrink-0 mt-0.5">💡</span>
+            <span class="text-[#2DD4BF] text-xs shrink-0 mt-0.5">💡</span>
             <p class="text-slate-400 text-xs leading-relaxed">${s.tip}</p>
           </div>
           ${cap ? `
@@ -368,8 +368,8 @@ function renderStep(container) {
           </div>` : ''}
           ${isScleraUncaptured ? `
           <div class="flex items-center gap-2 mt-1 pt-2 border-t border-slate-700/40">
-            <div class="w-3.5 h-3.5 rounded-full border-2 border-cyan-400 border-t-transparent analyzing-spinner shrink-0"></div>
-            <p id="eye-seq-label" class="text-cyan-400 text-xs font-medium">${t('eyeSeqHint')}</p>
+            <div class="w-3.5 h-3.5 rounded-full border-2 border-[#2DD4BF] border-t-transparent analyzing-spinner shrink-0"></div>
+            <p id="eye-seq-label" class="text-[#2DD4BF] text-xs font-medium">${t('eyeSeqHint')}</p>
           </div>` : ''}
         </div>
 
@@ -389,16 +389,16 @@ function renderStep(container) {
             </button>
             <button id="next-btn"
               class="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white
-                     bg-gradient-to-r from-cyan-500 to-blue-600
-                     shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                     bg-gradient-to-r from-[#C9956D] to-[#A87B55]
+                     shadow-lg shadow-[#C9956D]/25 active:scale-95 transition-all
                      flex items-center justify-center gap-2">
               ${s.btn}
             </button>
           </div>` : `
           <button id="capture-btn" ${isScleraUncaptured ? 'disabled' : 'disabled'}
             class="w-full py-4 rounded-2xl font-bold text-base text-white
-                   bg-gradient-to-r from-cyan-500 to-blue-600
-                   shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                   bg-gradient-to-r from-[#C9956D] to-[#A87B55]
+                   shadow-lg shadow-[#C9956D]/25 active:scale-95 transition-all
                    disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
                    flex items-center justify-center gap-3">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -482,36 +482,36 @@ function getOverlaySVG(type, isCaptured) {
         </mask>
       </defs>
       <rect width="300" height="400" fill="rgba(0,0,0,0.45)" mask="url(#fm)"/>
-      <ellipse cx="150" cy="175" rx="115" ry="148" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-dasharray="12 5"/>
-      <line x1="35" y1="27" x2="55" y2="27" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="35" y1="27" x2="35" y2="47" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="265" y1="27" x2="245" y2="27" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="265" y1="27" x2="265" y2="47" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="35" y1="373" x2="55" y2="373" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="35" y1="373" x2="35" y2="353" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="265" y1="373" x2="245" y2="373" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="265" y1="373" x2="265" y2="353" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="150" cy="175" r="4" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
-      <line x1="140" y1="175" x2="130" y2="175" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
-      <line x1="160" y1="175" x2="170" y2="175" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
-      <line x1="150" y1="165" x2="150" y2="155" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
-      <line x1="150" y1="185" x2="150" y2="195" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="150" cy="175" rx="115" ry="148" fill="none" stroke="#2DD4BF" stroke-width="2.5" stroke-dasharray="12 5"/>
+      <line x1="35" y1="27" x2="55" y2="27" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="27" x2="35" y2="47" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="27" x2="245" y2="27" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="27" x2="265" y2="47" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="373" x2="55" y2="373" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="35" y1="373" x2="35" y2="353" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="373" x2="245" y2="373" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="265" y1="373" x2="265" y2="353" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="150" cy="175" r="4" fill="none" stroke="#2DD4BF" stroke-width="1.5" opacity="0.6"/>
+      <line x1="140" y1="175" x2="130" y2="175" stroke="#2DD4BF" stroke-width="1" opacity="0.5"/>
+      <line x1="160" y1="175" x2="170" y2="175" stroke="#2DD4BF" stroke-width="1" opacity="0.5"/>
+      <line x1="150" y1="165" x2="150" y2="155" stroke="#2DD4BF" stroke-width="1" opacity="0.5"/>
+      <line x1="150" y1="185" x2="150" y2="195" stroke="#2DD4BF" stroke-width="1" opacity="0.5"/>
     `)
 
     case 'eyes': return svg(`
       <rect width="300" height="400" fill="rgba(0,0,0,0.4)"/>
-      <ellipse cx="90" cy="170" rx="70" ry="38" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8 4"/>
-      <ellipse cx="210" cy="170" rx="70" ry="38" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8 4"/>
+      <ellipse cx="90" cy="170" rx="70" ry="38" fill="rgba(45,212,191,0.06)" stroke="#2DD4BF" stroke-width="2" stroke-dasharray="8 4"/>
+      <ellipse cx="210" cy="170" rx="70" ry="38" fill="rgba(45,212,191,0.06)" stroke="#2DD4BF" stroke-width="2" stroke-dasharray="8 4"/>
       <text x="90" y="120" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui" font-weight="600">${t('svgLeft')}</text>
       <text x="210" y="120" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui" font-weight="600">${t('svgRight')}</text>
-      <line x1="10" y1="170" x2="290" y2="170" stroke="#22d3ee" stroke-width="0.8" opacity="0.35" stroke-dasharray="4 3"/>
-      <circle cx="90" cy="170" r="18" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6"/>
-      <circle cx="210" cy="170" r="18" fill="none" stroke="#06b6d4" stroke-width="1.2" opacity="0.6"/>
+      <line x1="10" y1="170" x2="290" y2="170" stroke="#2DD4BF" stroke-width="0.8" opacity="0.35" stroke-dasharray="4 3"/>
+      <circle cx="90" cy="170" r="18" fill="none" stroke="#2DD4BF" stroke-width="1.2" opacity="0.6"/>
+      <circle cx="210" cy="170" r="18" fill="none" stroke="#2DD4BF" stroke-width="1.2" opacity="0.6"/>
     `)
 
     case 'sclera': return svg(`
       <rect width="300" height="400" fill="rgba(0,0,0,0.4)"/>
-      <path d="M20,175 Q150,60 280,175 Q150,290 20,175 Z" fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="2"/>
+      <path d="M20,175 Q150,60 280,175 Q150,290 20,175 Z" fill="rgba(45,212,191,0.05)" stroke="#2DD4BF" stroke-width="2"/>
       <!-- Arrows — IDs used by runEyeSequence() for highlighting -->
       <text id="arrow-up"    x="150" y="50"  text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">↑</text>
       <text id="arrow-down"  x="150" y="362" text-anchor="middle" fill="#22d3ee" font-size="28" opacity="0.3">↓</text>
@@ -527,8 +527,8 @@ function getOverlaySVG(type, isCaptured) {
 
     case 'tongue': return svg(`
       <rect width="300" height="400" fill="rgba(0,0,0,0.42)"/>
-      <path d="M75,195 Q150,165 225,195" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
-      <path d="M75,195 Q110,230 150,235 Q190,230 225,195" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+      <path d="M75,195 Q150,165 225,195" fill="none" stroke="#2DD4BF" stroke-width="2.5"/>
+      <path d="M75,195 Q110,230 150,235 Q190,230 225,195" fill="none" stroke="#2DD4BF" stroke-width="2.5"/>
       <ellipse cx="150" cy="290" rx="68" ry="62" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="2" stroke-dasharray="10 5"/>
       <text x="150" y="385" text-anchor="middle" fill="#ef4444" font-size="11" font-family="system-ui" font-weight="600">${t('svgTongue')}</text>
       <circle cx="150" cy="285" r="6" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
@@ -537,24 +537,24 @@ function getOverlaySVG(type, isCaptured) {
     case 'lips': return svg(`
       <rect width="300" height="400" fill="rgba(0,0,0,0.42)"/>
       <path d="M70,185 Q100,165 125,178 Q150,165 175,178 Q200,165 230,185 Q200,202 150,207 Q100,202 70,185 Z"
-            fill="rgba(239,68,68,0.08)" stroke="#22d3ee" stroke-width="2.2"/>
+            fill="rgba(239,68,68,0.08)" stroke="#2DD4BF" stroke-width="2.2"/>
       <path d="M70,185 Q110,230 150,237 Q190,230 230,185 Q200,202 150,207 Q100,202 70,185 Z"
-            fill="rgba(239,68,68,0.06)" stroke="#22d3ee" stroke-width="2" opacity="0.8"/>
-      <path d="M115,172 Q130,163 145,170" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.5"/>
-      <path d="M185,172 Q170,163 155,170" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.5"/>
+            fill="rgba(239,68,68,0.06)" stroke="#2DD4BF" stroke-width="2" opacity="0.8"/>
+      <path d="M115,172 Q130,163 145,170" fill="none" stroke="#2DD4BF" stroke-width="1.2" opacity="0.5"/>
+      <path d="M185,172 Q170,163 155,170" fill="none" stroke="#2DD4BF" stroke-width="1.2" opacity="0.5"/>
       <text x="150" y="140" text-anchor="middle" fill="#22d3ee" font-size="11" font-family="system-ui">${t('svgLipsLabel')}</text>
     `)
 
     case 'skin': return svg(`
       <rect width="300" height="400" fill="rgba(0,0,0,0.32)"/>
       <rect x="70" y="28" width="160" height="70" rx="8"
-            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+            fill="rgba(45,212,191,0.05)" stroke="#2DD4BF" stroke-width="1.5" stroke-dasharray="6 4"/>
       <text x="150" y="22" text-anchor="middle" fill="#22d3ee" font-size="10" font-family="system-ui" font-weight="600">${t('svgForehead')}</text>
       <rect x="16" y="155" width="90" height="105" rx="8"
-            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+            fill="rgba(45,212,191,0.05)" stroke="#2DD4BF" stroke-width="1.5" stroke-dasharray="6 4"/>
       <text x="61" y="148" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="system-ui" font-weight="600">${t('svgLeftCheek')}</text>
       <rect x="194" y="155" width="90" height="105" rx="8"
-            fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6 4"/>
+            fill="rgba(45,212,191,0.05)" stroke="#2DD4BF" stroke-width="1.5" stroke-dasharray="6 4"/>
       <text x="239" y="148" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="system-ui" font-weight="600">${t('svgRightCheek')}</text>
       <rect x="122" y="115" width="56" height="115" rx="6"
             fill="rgba(251,191,36,0.04)" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.7"/>
@@ -832,7 +832,7 @@ function renderProcessing(container) {
     <div class="flex flex-col min-h-dvh bg-gradient-to-b from-[#0f0f1a] to-[#0d1a2e] slide-from-right">
 
       <header class="flex items-center justify-center gap-3 py-5 px-4">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E0B990] to-[#C9956D] flex items-center justify-center shadow-lg shadow-cyan-500/30">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
@@ -850,8 +850,8 @@ function renderProcessing(container) {
           ${faceImg
             ? `<img src="${faceImg}" class="w-full h-full object-cover"/>`
             : `<div class="w-full h-full bg-slate-800 flex items-center justify-center text-5xl">👤</div>`}
-          <div id="laser-line" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent processing-laser" style="top:0%"></div>
-          <div class="absolute inset-0 opacity-20" style="background-image:linear-gradient(rgba(34,211,238,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.5) 1px,transparent 1px);background-size:20px 20px"></div>
+          <div id="laser-line" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9956D] to-transparent processing-laser" style="top:0%"></div>
+          <div class="absolute inset-0 opacity-20" style="background-image:linear-gradient(rgba(201,149,109,0.35) 1px,transparent 1px),linear-gradient(90deg,rgba(201,149,109,0.35) 1px,transparent 1px);background-size:20px 20px"></div>
         </div>
 
         <!-- Thumbnails -->
@@ -870,8 +870,8 @@ function renderProcessing(container) {
           <div class="flex flex-col items-center gap-3">
             <div class="relative w-14 h-14">
               <div class="absolute inset-0 rounded-full border-2 border-cyan-500/20"></div>
-              <div class="absolute inset-0 rounded-full border-2 border-cyan-400 border-t-transparent analyzing-spinner"></div>
-              <div class="absolute inset-2 rounded-full border border-blue-500/40 border-b-transparent analyzing-spinner" style="animation-duration:1.5s;animation-direction:reverse"></div>
+              <div class="absolute inset-0 rounded-full border-2 border-[#2DD4BF] border-t-transparent analyzing-spinner"></div>
+              <div class="absolute inset-2 rounded-full border border-[#2DD4BF]/40 border-b-transparent analyzing-spinner" style="animation-duration:1.5s;animation-direction:reverse"></div>
             </div>
             <div class="text-center">
               <p id="check-text" class="text-white font-semibold text-sm">${t('prep')}</p>
@@ -885,7 +885,7 @@ function renderProcessing(container) {
               <span id="pct-text" class="text-cyan-400 font-bold">0%</span>
             </div>
             <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500" style="width:0%"></div>
+              <div id="progress-bar" class="h-full bg-gradient-to-r from-[#C9956D] to-[#2DD4BF] rounded-full transition-all duration-500" style="width:0%"></div>
             </div>
           </div>
 
@@ -902,7 +902,7 @@ function renderProcessing(container) {
             </div>
             <div class="flex gap-2">
               <button id="retry-api-btn"
-                class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-cyan-600 active:scale-95 transition-all">
+                class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-[#C9956D] active:scale-95 transition-all">
                 ${t('btnRetryApi')}
               </button>
               <button id="demo-mode-btn"
