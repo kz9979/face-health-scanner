@@ -1,6 +1,6 @@
 import { router } from '../main.js'
 import healthData from '../../health-data.json'
-import { t, getLang, setLang } from '../i18n.js'
+import { t, getLang } from '../i18n.js'
 
 const ACTION   = healthData.actionLevels
 
@@ -86,10 +86,6 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
             <span class="w-2 h-2 rounded-full ${s.dot} animate-pulse"></span>
             <span class="text-xs font-semibold ${s.text}">${s.label}</span>
           </div>
-          <button id="lang-toggle"
-            class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors active:scale-90 border border-slate-700/50">
-            ${t('langBtn')}
-          </button>
         </div>
       </header>
 
@@ -226,11 +222,6 @@ export function renderResults(container, { scanData = {}, imageDataUrl, detected
 
   document.getElementById('back-btn').addEventListener('click', () => router.go('scanner'))
   document.getElementById('scan-again-btn').addEventListener('click', () => router.go('scanner'))
-
-  document.getElementById('lang-toggle')?.addEventListener('click', () => {
-    setLang(getLang() === 'bm' ? 'en' : 'bm')
-    renderResults(container, _savedArgs)
-  })
 
   // Expand/collapse condition cards
   detected.forEach((_, i) => {

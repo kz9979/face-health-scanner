@@ -1,6 +1,6 @@
 import { router } from '../main.js'
 import healthData from '../../health-data.json'
-import { t, getLang, setLang } from '../i18n.js'
+import { t, getLang } from '../i18n.js'
 
 // ── Module-level state ─────────────────────────────────────────────────────────
 let stream      = null
@@ -92,10 +92,6 @@ function renderAgeGender(container, saved = {}) {
             <p class="text-xs text-cyan-400/80">${t('appSub')}</p>
           </div>
         </div>
-        <button id="lang-toggle"
-          class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors active:scale-90 border border-slate-700/50">
-          ${t('langBtn')}
-        </button>
       </header>
 
       <main class="flex-1 overflow-y-auto px-4 py-6">
@@ -126,8 +122,8 @@ function renderAgeGender(container, saved = {}) {
             <!-- Gender -->
             <div class="flex flex-col gap-2">
               <label class="text-sm font-semibold text-slate-300">${t('genderLabel')}</label>
-              <div class="grid grid-cols-3 gap-2">
-                ${['male', 'female', 'none'].map(v => `
+              <div class="grid grid-cols-2 gap-2">
+                ${['male', 'female'].map(v => `
                 <label class="relative cursor-pointer select-none">
                   <input type="radio" name="gender" value="${v}" class="sr-only peer"
                     ${saved.gender === v ? 'checked' : ''}/>
@@ -205,15 +201,6 @@ function renderAgeGender(container, saved = {}) {
     })
   })
 
-  // ── Lang toggle — preserve all form state ────────────────────────────────
-  document.getElementById('lang-toggle')?.addEventListener('click', () => {
-    const age    = document.getElementById('age-input')?.value ?? ''
-    const gender = document.querySelector('input[name="gender"]:checked')?.value ?? null
-    const other  = document.getElementById('cond-other-input')?.value ?? ''
-    setLang(getLang() === 'bm' ? 'en' : 'bm')
-    renderAgeGender(container, { age, gender, conditions: condSet, other })
-  })
-
   // ── Field error dismissal ────────────────────────────────────────────────
   document.getElementById('age-input')?.addEventListener('input', () =>
     document.getElementById('age-error')?.classList.add('hidden'))
@@ -276,10 +263,6 @@ function renderStep(container) {
             <button id="tts-btn" title="${t('listenBtn')}"
               class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors active:scale-90">
               🔊
-            </button>
-            <button id="lang-toggle"
-              class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors active:scale-90 border border-slate-700/50">
-              ${t('langBtn')}
             </button>
           </div>
         </div>
@@ -464,11 +447,6 @@ function renderStep(container) {
   document.getElementById('retry-camera')?.addEventListener('click', initCamera)
   document.getElementById('back-btn')?.addEventListener('click', handleBack)
   document.getElementById('skip-btn')?.addEventListener('click', handleSkip)
-  document.getElementById('lang-toggle')?.addEventListener('click', () => {
-    setLang(getLang() === 'bm' ? 'en' : 'bm')
-    renderStep(container)
-  })
-
   if (cap) {
     document.getElementById('retake-btn')?.addEventListener('click', handleRetake)
     document.getElementById('next-btn')?.addEventListener('click', handleNext)

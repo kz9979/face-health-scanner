@@ -1,5 +1,8 @@
 // Language module — singleton, module-level state (no localStorage)
-let _lang = navigator.language.startsWith('ms') ? 'bm' : 'en'
+// Priority: URL ?lang= param → browser locale
+const _urlLang = new URLSearchParams(location.search).get('lang')
+let _lang = (_urlLang === 'bm' || _urlLang === 'en') ? _urlLang
+          : navigator.language.startsWith('ms') ? 'bm' : 'en'
 
 export const getLang = () => _lang
 export const setLang = (l) => { _lang = l }
@@ -89,7 +92,7 @@ const T = {
     langBtn:   'EN',
     // Processing
     processingTitle: 'Menganalisis Kesihatan Anda',
-    procSubLabel:    'GPT-4o Vision',
+    procSubLabel:    'Claude AI Vision',
     prep:            'Menyediakan imej untuk analisis...',
     prepSub:         'Memproses data imej',
     sending:         'Menghantar imej ke AI...',
@@ -282,7 +285,7 @@ const T = {
     langBtn:   'BM',
     // Processing
     processingTitle: 'Analyzing Your Health',
-    procSubLabel:    'GPT-4o Vision',
+    procSubLabel:    'Claude AI Vision',
     prep:            'Preparing images for analysis...',
     prepSub:         'Processing image data',
     sending:         'Sending images to AI...',
