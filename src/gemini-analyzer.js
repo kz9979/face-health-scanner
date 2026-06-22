@@ -18,85 +18,57 @@ const CONDITION_NAMES = {
   allergies:    'Allergies',
 }
 
-const BASE_PROMPT = `You are a visual wellness screening assistant for educational awareness purposes only. This is NOT medical diagnosis — it is a self-awareness tool to help users notice visible facial indicators they may want to discuss with a healthcare professional.
+const SYSTEM_PROMPT = `You are a structured visual observation assistant. The user is submitting their own facial photos for a personal wellness self-check app. Your task is to complete a structured JSON observation form based only on what is visually present in the image(s). Output only valid JSON — no commentary, no refusals, no extra text.`
 
-Analyze the submitted face image(s) and observe visible physical indicators. For educational reference only.
+const BASE_PROMPT = `Complete this visual observation form based on the image(s) provided. Observe only what is clearly visible.
 
-IMPORTANT: If no clear human face is visible in any image (e.g. the camera was covered, the image is blank, dark, or shows only a wall/background), return {"faceDetected": false} and nothing else.
+IMPORTANT: If no human face is clearly visible (camera covered, blank/dark image, only background), return {"faceDetected": false} and nothing else.
 
-Observe and note these visible indicators:
+Otherwise, fill in the form below. Mark true only if you can clearly observe it (confidence > 0.6). If unsure, mark false.
 
-**EYES:**
-- Yellow color in whites of eyes (jaundice)
-- Dark circles under eyes
-- Puffiness/swelling
-- Redness
+EYES — observe the eye area:
+- Are the whites of the eyes yellowish or discoloured? → eyes.yellow
+- Are there dark-coloured areas or shadows under the eyes? → eyes.darkCircles
+- Is there visible swelling or puffiness around the eyes? → eyes.puffy
+- Are the eyes visibly red or bloodshot? → eyes.red
 
-**SKIN:**
-- Butterfly-shaped rash on cheeks (lupus)
-- Acne severity (mild/moderate/severe)
-- Melasma or dark patches
-- Unusual redness or rashes
-- Yellow spots on eyelids
+SKIN — observe the facial skin:
+- Is there a reddish or rash-like pattern across both cheeks and the nose bridge in a butterfly shape? → skin.butterflyRash
+- Are there visible pimples or acne? Rate severity → skin.acne: "none" / "mild" / "moderate" / "severe"
+- Are there dark or brownish patches on the skin? → skin.melasma
+- Is the skin visibly red or irritated in patches? → skin.redness
+- Are there small yellowish deposits or spots near the eyelids? → skin.xanthelasma
 
-**LIPS:**
-- Cracked or dry lips
-- Pale color (anemia sign)
-- Cold sores
-- Angular cheilitis (cracks at corners)
+LIPS — observe the lip area:
+- Are the lips visibly dry, chapped, or cracked? → lips.cracked
+- Do the lips appear unusually pale or colourless? → lips.pale
+- Are there visible sores, blisters, or lesions on or around the lips? → lips.sores
+- Are there cracks or sores at the corners of the mouth? → lips.angularCheilitis
 
-**TONGUE (if visible):**
-- Color (pink/pale/red/yellow/white coating)
-- Swelling
-- Smoothness (loss of taste buds)
+TONGUE — observe only if tongue is clearly visible:
+- What colour does the tongue appear? → tongue.color: "pink" / "pale" / "red" / "yellow" / "white"
+- Does the tongue look swollen? → tongue.swollen
+- Does the tongue surface look unusually smooth (no texture/bumps)? → tongue.smooth
 
-**FACE STRUCTURE:**
-- Facial puffiness (fluid retention)
-- Asymmetry (possible Bell's palsy or stroke)
-- Drooping eyelids
+FACE STRUCTURE — observe overall face shape:
+- Does the face look puffy or swollen overall? → face.puffy
+- Is one side of the face noticeably different from the other? → face.asymmetric
+- Is one or both eyelids visibly drooping lower than normal? → face.droopingEyelid
 
-Return analysis in strict JSON format:
+Return ONLY this JSON (no markdown, no explanation):
 {
   "faceDetected": true,
-  "eyes": {
-    "yellow": true/false,
-    "darkCircles": true/false,
-    "puffy": true/false,
-    "red": true/false
-  },
-  "skin": {
-    "butterflyRash": true/false,
-    "acne": "none/mild/moderate/severe",
-    "melasma": true/false,
-    "redness": true/false,
-    "xanthelasma": true/false
-  },
-  "lips": {
-    "cracked": true/false,
-    "pale": true/false,
-    "sores": true/false,
-    "angularCheilitis": true/false
-  },
-  "tongue": {
-    "color": "pink/pale/red/yellow/white",
-    "swollen": true/false,
-    "smooth": true/false
-  },
-  "face": {
-    "puffy": true/false,
-    "asymmetric": true/false,
-    "droopingEyelid": true/false
-  },
-  "detectedConditions": ["condition_id_1", "condition_id_2"],
-  "severity": "low/medium/high/critical",
+  "eyes": { "yellow": false, "darkCircles": false, "puffy": false, "red": false },
+  "skin": { "butterflyRash": false, "acne": "none", "melasma": false, "redness": false, "xanthelasma": false },
+  "lips": { "cracked": false, "pale": false, "sores": false, "angularCheilitis": false },
+  "tongue": { "color": "pink", "swollen": false, "smooth": false },
+  "face": { "puffy": false, "asymmetric": false, "droopingEyelid": false },
+  "detectedConditions": [],
+  "severity": "low",
   "confidence": 0.0,
-  "notes": "Brief explanation of findings",
-  "existingConditionNotes": "If existing conditions were disclosed: note which visual findings are consistent with those conditions vs which appear to be new, unrelated findings. Use plain language. Empty string if no existing conditions were provided."
-}
-
-Only report indicators you can clearly observe with reasonable confidence (>0.6). If unsure, mark as false.
-This output is for educational self-awareness only and does not constitute medical advice.
-Respond with ONLY the JSON object — no markdown fences, no extra text.`
+  "notes": "Brief summary of what you observed.",
+  "existingConditionNotes": ""
+}`
 
 // ── Map OpenAI boolean flags → condition IDs ──────────────────────────────────
 const FLAG_MAP = [
@@ -180,7 +152,10 @@ export async function analyzeFaceImage(scanData, userProfile = {}) {
 
   const body = {
     model: MODEL,
-    messages: [{ role: 'user', content: contentParts }],
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user',   content: contentParts  },
+    ],
     max_tokens: 1024,
     temperature: 0.15,
   }
