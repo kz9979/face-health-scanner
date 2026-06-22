@@ -10,7 +10,9 @@ let captured    = {}
 let direction   = 'forward'
 let userProfile = { age: null, gender: null }
 let _appContainer   = null  // for language-toggle re-render
-let _prevSpokenStep = -1    // guard: prevents speak() firing twice for the same step
+let _prevSpokenStep    = -1    // guard: prevents speak() firing twice for the same step
+let _liveDetectTimer   = null
+let _liveDetectPending = false
 
 // ── Step config (rebuilt on each call so translations are current) ────────────
 function getSteps() {
@@ -333,6 +335,9 @@ function renderStep(container) {
               </div>
             </div>` : ''}
 
+            <!-- Live face detection badge (real-time) -->
+            ${!cap ? `<div id="live-face-badge" class="hidden absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none z-10"></div>` : ''}
+
             <!-- Camera loading -->
             <div id="camera-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-3 ${cap ? 'hidden' : ''}">
               <div class="w-8 h-8 rounded-full border-2 border-[#2DD4BF] border-t-transparent analyzing-spinner"></div>
@@ -437,6 +442,7 @@ function renderStep(container) {
       vid.play().catch(() => {})
       document.getElementById('camera-loading')?.classList.add('hidden')
       if (!isScleraUncaptured) enableCaptureBtn()
+      startLiveDetection()
     }
   } else {
     initCamera()
@@ -625,6 +631,7 @@ async function initCamera() {
     })
     if (vid) { vid.srcObject = stream; await vid.play() }
     if (loading) loading.classList.add('hidden')
+    startLiveDetection()
     // Only auto-enable if not the sclera sequence step
     const STEPS = getSteps()
     if (STEPS[step].key !== 'sclera' || captured[STEPS[step].key]) enableCaptureBtn()
@@ -635,6 +642,7 @@ async function initCamera() {
 }
 
 function stopStream() {
+  stopLiveDetection()
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null }
 }
 
@@ -643,10 +651,66 @@ function enableCaptureBtn() {
   if (btn) btn.disabled = false
 }
 
+// ── Live face detection (real-time preview indicator) ─────────────────────────
+function startLiveDetection() {
+  stopLiveDetection()
+  _liveDetectPending = false
+  _liveDetectTimer = setInterval(async () => {
+    if (_liveDetectPending) return
+    const vid   = document.getElementById('camera-video')
+    const badge = document.getElementById('live-face-badge')
+    if (!vid || !badge || vid.readyState < 2 || vid.videoWidth === 0) return
+
+    _liveDetectPending = true
+    try {
+      const offscreen = document.createElement('canvas')
+      offscreen.width = 160; offscreen.height = 120
+      offscreen.getContext('2d').drawImage(vid, 0, 0, 160, 120)
+
+      let ok = imageHasContent(offscreen)
+
+      if (ok && 'FaceDetector' in window) {
+        const stepKey = getSteps()[step]?.key
+        if (['face', 'eyes'].includes(stepKey)) {
+          try {
+            const det  = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+            const bmp  = await createImageBitmap(offscreen)
+            const hits = await det.detect(bmp)
+            bmp.close()
+            ok = hits.length > 0
+          } catch { /* FaceDetector unavailable — trust pixel check */ }
+        }
+      }
+
+      badge.classList.remove('hidden')
+      badge.innerHTML = ok
+        ? `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/75 backdrop-blur-sm shadow">
+             <div class="w-1.5 h-1.5 rounded-full bg-green-200"></div>
+             <span class="text-[11px] text-white font-semibold">${t('faceOk')}</span>
+           </div>`
+        : `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/80 backdrop-blur-sm shadow">
+             <div class="w-1.5 h-1.5 rounded-full bg-amber-200"></div>
+             <span class="text-[11px] text-white font-semibold">${t('noFaceTitle')}</span>
+           </div>`
+    } finally {
+      _liveDetectPending = false
+    }
+  }, 800)
+}
+
+function stopLiveDetection() {
+  if (_liveDetectTimer !== null) {
+    clearInterval(_liveDetectTimer)
+    _liveDetectTimer = null
+  }
+}
+
 // ── Capture ───────────────────────────────────────────────────────────────────
 async function handleCaptureClick() {
   const btn = document.getElementById('capture-btn')
   if (btn) btn.disabled = true
+  stopLiveDetection()
+  document.getElementById('live-face-badge')?.classList.add('hidden')
 
   await runCountdown()
 
@@ -665,6 +729,7 @@ async function handleCaptureClick() {
   const faceOk = await checkFacePresent(canvas, key)
   if (!faceOk) {
     showNoFaceWarning()   // shows overlay + re-enables button after 3 s
+    startLiveDetection()  // restart live detection for next attempt
     return
   }
 
