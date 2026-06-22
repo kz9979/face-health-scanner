@@ -3,13 +3,14 @@ import healthData from '../../health-data.json'
 import { t, getLang, setLang } from '../i18n.js'
 
 // ── Module-level state ─────────────────────────────────────────────────────────
-let stream    = null
-let step      = 0
-let scanData  = {}
-let captured  = {}
-let direction = 'forward'
-let _appContainer    = null  // for language-toggle re-render
-let _prevSpokenStep  = -1    // guard: prevents speak() firing twice for the same step
+let stream      = null
+let step        = 0
+let scanData    = {}
+let captured    = {}
+let direction   = 'forward'
+let userProfile = { age: null, gender: null }
+let _appContainer   = null  // for language-toggle re-render
+let _prevSpokenStep = -1    // guard: prevents speak() firing twice for the same step
 
 // ── Step config (rebuilt on each call so translations are current) ────────────
 function getSteps() {
@@ -38,13 +39,126 @@ const ALL_CONDITIONS = flattenConditions()
 // ── Entry point ───────────────────────────────────────────────────────────────
 export function renderScanner(container) {
   _appContainer   = container
-  _prevSpokenStep = -1   // reset so step 0 auto-speaks on each new scan session
+  _prevSpokenStep = -1
   stopStream()
-  step      = 0
-  scanData  = {}
-  captured  = {}
-  direction = 'forward'
-  renderStep(container)
+  step        = 0
+  scanData    = {}
+  captured    = {}
+  direction   = 'forward'
+  userProfile = { age: null, gender: null }
+  renderAgeGender(container)  // age/gender form always shown first
+}
+
+// ── Age / Gender form ─────────────────────────────────────────────────────────
+function renderAgeGender(container) {
+  _appContainer = container
+  container.innerHTML = `
+    <div class="flex flex-col min-h-dvh bg-gradient-to-b from-[#0f0f1a] to-[#0d1a2e] fade-in">
+
+      <header class="px-4 pt-4 pb-3 flex items-center justify-between border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shrink-0 shadow shadow-cyan-500/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-white font-bold text-sm leading-tight">Face Health Scanner</p>
+            <p class="text-xs text-cyan-400/80">${t('appSub')}</p>
+          </div>
+        </div>
+        <button id="lang-toggle"
+          class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors active:scale-90 border border-slate-700/50">
+          ${t('langBtn')}
+        </button>
+      </header>
+
+      <main class="flex-1 flex flex-col items-center justify-center px-4 pb-8">
+        <div class="w-full max-w-sm flex flex-col gap-6">
+
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-cyan-400/15 to-blue-600/15 border border-cyan-500/30 flex items-center justify-center text-3xl mb-4 shadow-lg shadow-cyan-500/10">
+              📋
+            </div>
+            <h2 class="text-xl font-bold text-white">${t('ageGenderTitle')}</h2>
+            <p class="text-slate-400 text-sm mt-2 leading-relaxed">${t('ageGenderSub')}</p>
+          </div>
+
+          <div class="flex flex-col gap-5">
+
+            <!-- Age -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-slate-300">${t('ageLabel')}</label>
+              <input id="age-input" type="number" min="1" max="120"
+                placeholder="${t('agePlaceholder')}"
+                class="w-full px-4 py-3.5 rounded-2xl bg-slate-800 border border-slate-700/80 text-white text-sm
+                       placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40
+                       transition-colors"/>
+              <p id="age-error" class="hidden text-xs text-red-400 px-1">${t('ageError')}</p>
+            </div>
+
+            <!-- Gender -->
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-slate-300">${t('genderLabel')}</label>
+              <div class="grid grid-cols-3 gap-2">
+                ${['male', 'female', 'none'].map(v => `
+                <label class="relative cursor-pointer select-none">
+                  <input type="radio" name="gender" value="${v}" class="sr-only peer"/>
+                  <div class="py-3 px-1 rounded-xl border border-slate-700 bg-slate-800 text-center text-xs font-semibold text-slate-400
+                              peer-checked:border-cyan-500 peer-checked:bg-cyan-500/15 peer-checked:text-cyan-300
+                              hover:border-slate-600 transition-all duration-150 active:scale-95">
+                    ${v === 'male' ? t('genderMale') : v === 'female' ? t('genderFemale') : t('genderNone')}
+                  </div>
+                </label>`).join('')}
+              </div>
+              <p id="gender-error" class="hidden text-xs text-red-400 px-1">${t('genderError')}</p>
+            </div>
+
+            <!-- Continue -->
+            <button id="continue-btn"
+              class="w-full py-4 rounded-2xl font-bold text-base text-white mt-1
+                     bg-gradient-to-r from-cyan-500 to-blue-600
+                     shadow-lg shadow-cyan-500/25 active:scale-95 transition-all
+                     flex items-center justify-center gap-2">
+              ${t('btnContinue')}
+            </button>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  `
+
+  document.getElementById('lang-toggle')?.addEventListener('click', () => {
+    setLang(getLang() === 'bm' ? 'en' : 'bm')
+    renderAgeGender(container)
+  })
+
+  document.getElementById('age-input')?.addEventListener('input', () =>
+    document.getElementById('age-error')?.classList.add('hidden'))
+
+  document.querySelectorAll('input[name="gender"]').forEach(r =>
+    r.addEventListener('change', () =>
+      document.getElementById('gender-error')?.classList.add('hidden')))
+
+  document.getElementById('continue-btn')?.addEventListener('click', () => {
+    const ageVal    = parseInt(document.getElementById('age-input')?.value ?? '')
+    const genderVal = document.querySelector('input[name="gender"]:checked')?.value
+
+    let valid = true
+    if (!ageVal || ageVal < 1 || ageVal > 120) {
+      document.getElementById('age-error')?.classList.remove('hidden')
+      valid = false
+    }
+    if (!genderVal) {
+      document.getElementById('gender-error')?.classList.remove('hidden')
+      valid = false
+    }
+    if (!valid) return
+
+    userProfile = { age: ageVal, gender: genderVal }
+    renderStep(container)
+  })
 }
 
 // ── Render current wizard step ────────────────────────────────────────────────
@@ -479,19 +593,102 @@ async function handleCaptureClick() {
 
   canvas.width  = vid.videoWidth  || 640
   canvas.height = vid.videoHeight || 480
-  canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height)
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(vid, 0, 0, canvas.width, canvas.height)
+
+  // Validate face / body-part presence before accepting capture
+  const STEPS = getSteps()
+  const key = STEPS[step].key
+  const faceOk = await checkFacePresent(canvas, key)
+  if (!faceOk) {
+    showNoFaceWarning()   // shows overlay + re-enables button after 3 s
+    return
+  }
+
   const image = canvas.toDataURL('image/jpeg', 0.88)
 
   flashCapture()
   vibrate([60, 40, 60])
 
-  const STEPS = getSteps()
-  const key = STEPS[step].key
   scanData[key] = { image, timestamp: Date.now() }
   captured[key] = true
 
   direction = 'forward'
   renderStep(document.getElementById('app'))
+}
+
+// ── Face / content presence check ────────────────────────────────────────────
+async function checkFacePresent(canvas, stepKey) {
+  // Primary: FaceDetector API (Chrome/Edge — experimental but widely available on Android Chrome)
+  if ('FaceDetector' in window) {
+    try {
+      const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+      const bitmap   = await createImageBitmap(canvas)
+      const faces    = await detector.detect(bitmap)
+      bitmap.close()
+      if (faces.length > 0) return true
+      // For full-face steps FaceDetector gives a firm "no" — block it
+      if (['face', 'eyes'].includes(stepKey)) return false
+      // Close-up steps (tongue, lips, sclera, skin) may not show a full face;
+      // fall through to the variance check below
+    } catch { /* API unavailable or permission error — fall through */ }
+  }
+
+  // Fallback: pixel content check — blocked cameras / blank images are nearly
+  // uniform and will have a very low mean absolute deviation across channels
+  return imageHasContent(canvas)
+}
+
+function imageHasContent(canvas) {
+  // Sample a central 320×240 crop for speed
+  const sw = Math.min(canvas.width, 320)
+  const sh = Math.min(canvas.height, 240)
+  const ox = Math.floor((canvas.width  - sw) / 2)
+  const oy = Math.floor((canvas.height - sh) / 2)
+  const { data } = canvas.getContext('2d').getImageData(ox, oy, sw, sh)
+
+  // Compute mean colour (every 8th pixel)
+  let count = 0, sumR = 0, sumG = 0, sumB = 0
+  for (let i = 0; i < data.length; i += 32) {   // step 8 pixels (4 bytes × 8)
+    sumR += data[i]; sumG += data[i + 1]; sumB += data[i + 2]; count++
+  }
+  if (count === 0) return true   // can't determine — allow
+  const avgR = sumR / count, avgG = sumG / count, avgB = sumB / count
+
+  // Compute Mean Absolute Deviation
+  let mad = 0
+  for (let i = 0; i < data.length; i += 32) {
+    mad += Math.abs(data[i] - avgR) + Math.abs(data[i + 1] - avgG) + Math.abs(data[i + 2] - avgB)
+  }
+  mad /= count
+
+  // MAD < 15 → very uniform image (covered lens, dark room, blank wall)
+  return mad > 15
+}
+
+function showNoFaceWarning() {
+  vibrate([100, 50, 100])
+  const vf = document.getElementById('viewfinder')
+  if (!vf) return
+
+  const warn = document.createElement('div')
+  warn.className = 'absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0f0f1a]/93 z-20 p-6 text-center'
+  warn.innerHTML = `
+    <div class="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+    <p class="text-amber-300 font-bold text-sm">${t('noFaceTitle')}</p>
+    <p class="text-slate-400 text-xs leading-relaxed max-w-[200px]">${t('noFaceMsg')}</p>
+  `
+  vf.appendChild(warn)
+
+  setTimeout(() => {
+    warn.remove()
+    const captureBtn = document.getElementById('capture-btn')
+    if (captureBtn) captureBtn.disabled = false
+  }, 3000)
 }
 
 async function runCountdown() {
@@ -710,6 +907,30 @@ function showError(msg) {
   document.getElementById('demo-mode-btn')?.addEventListener('click', runDemoMode)
 }
 
+// Separate error display for "no face in images" — no demo mode offered
+function showNoFaceAnalysisError(msg) {
+  const box     = document.getElementById('error-box')
+  const msgEl   = document.getElementById('error-msg')
+  const spinner = document.querySelector('.analyzing-spinner')
+  if (box)     box.classList.remove('hidden')
+  if (msgEl)   msgEl.textContent = msg
+  if (spinner) spinner.style.animationPlayState = 'paused'
+
+  // Relabel title and override button to go back to scanner
+  const titleEl = box?.querySelector('p.font-semibold')
+  if (titleEl) titleEl.textContent = t('noFaceTitle')
+
+  // Replace buttons: one "Scan Again" only; hide demo mode
+  const retryBtn = document.getElementById('retry-api-btn')
+  const demoBtn  = document.getElementById('demo-mode-btn')
+  if (demoBtn) demoBtn.classList.add('hidden')
+  if (retryBtn) {
+    retryBtn.textContent = t('btnScanAgain')
+    retryBtn.classList.add('col-span-2', 'w-full')
+    retryBtn.addEventListener('click', () => { stopStream(); router.go('scanner') })
+  }
+}
+
 // ── Gemini processing flow ────────────────────────────────────────────────────
 async function runProcessing() {
   const imgCount = Object.values(scanData).filter(v => v?.image).length
@@ -722,7 +943,14 @@ async function runProcessing() {
     await delay(300)
 
     const { analyzeFaceImage, mapToConditions } = await import('../gemini-analyzer.js')
-    const geminiResult = await analyzeFaceImage(scanData)
+    const geminiResult = await analyzeFaceImage(scanData, userProfile)
+
+    // Hard block: Gemini reports no face in any submitted image
+    if (geminiResult.faceDetected === false) {
+      const err = new Error(t('noFaceImagesMsg'))
+      err.isNoFace = true
+      throw err
+    }
 
     addCheckItem(t('geminiDone'))
 
@@ -753,7 +981,11 @@ async function runProcessing() {
     console.error('[Gemini]', err)
     addCheckItem(`${t('errorPrefix')}: ${err.message}`, false)
     setProgress(t('analysisError'), 0, '')
-    showError(err.message)
+    if (err.isNoFace) {
+      showNoFaceAnalysisError(err.message)
+    } else {
+      showError(err.message)
+    }
   }
 }
 

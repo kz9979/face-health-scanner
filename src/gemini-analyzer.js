@@ -3,7 +3,9 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const API_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`
 
-const PROMPT = `You are a medical diagnostic AI. Analyze this face image for health conditions.
+const BASE_PROMPT = `You are a medical diagnostic AI. Analyze the submitted face image(s) for health conditions.
+
+IMPORTANT: If no clear human face is visible in any image (e.g. the camera was covered, the image is blank, dark, or shows only a wall/background), return {"faceDetected": false} and nothing else.
 
 Check for these specific signs:
 
@@ -38,6 +40,7 @@ Check for these specific signs:
 
 Return analysis in strict JSON format:
 {
+  "faceDetected": true,
   "eyes": {
     "yellow": true/false,
     "darkCircles": true/false,
@@ -97,8 +100,32 @@ function getPath(obj, path) {
 }
 
 // ── Send image(s) to Gemini ───────────────────────────────────────────────────
-export async function analyzeFaceImage(scanData) {
+export async function analyzeFaceImage(scanData, userProfile = {}) {
   if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY not set in .env')
+
+  // Debug: log masked key so we can confirm which key is active at runtime
+  const maskedKey = `${API_KEY.slice(0, 6)}…${API_KEY.slice(-4)}`
+  console.log(`[Gemini] Key: ${maskedKey} | URL: ${API_URL.replace(API_KEY, maskedKey)}`)
+
+  // Build age/gender context prefix for the prompt
+  const { age, gender } = userProfile
+  const genderLabel = gender === 'male' ? 'male' : gender === 'female' ? 'female' : null
+  let profilePrefix = ''
+  if (age || genderLabel) {
+    profilePrefix = 'Patient demographics: '
+    if (age)         profilePrefix += `${age} years old`
+    if (age && genderLabel) profilePrefix += ', '
+    if (genderLabel) profilePrefix += genderLabel
+    profilePrefix += '.\n'
+    profilePrefix += 'Consider only age- and gender-appropriate conditions. '
+    if (genderLabel === 'male')   profilePrefix += 'Exclude female-specific conditions (e.g. pregnancy-related, menstruation). '
+    if (genderLabel === 'female') profilePrefix += 'Include female-specific conditions where relevant. '
+    if (age && age < 18)  profilePrefix += 'Focus on paediatric/adolescent presentations. '
+    if (age && age > 60)  profilePrefix += 'Consider age-related degenerative and vascular presentations. '
+    profilePrefix += '\n\n'
+  }
+
+  const PROMPT = profilePrefix + BASE_PROMPT
 
   // Build parts array — include face + tongue + lips if captured
   const SCAN_PRIORITY = ['face', 'tongue', 'lips', 'eyes', 'sclera', 'skin']
@@ -109,7 +136,7 @@ export async function analyzeFaceImage(scanData) {
     if (!entry?.image || entry.skipped) continue
     const base64 = entry.image.replace(/^data:image\/\w+;base64,/, '')
     imageParts.push({ inlineData: { mimeType: 'image/jpeg', data: base64 } })
-    if (imageParts.length >= 3) break   // Gemini 1.5 Flash handles up to ~16 images; 3 is plenty
+    if (imageParts.length >= 3) break   // 3 images is plenty for Gemini 2.5 Flash
   }
 
   if (imageParts.length === 0) throw new Error('No images available to analyse')
@@ -143,6 +170,7 @@ export async function analyzeFaceImage(scanData) {
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}))
     const msg = errBody?.error?.message || `HTTP ${res.status}`
+    console.error('[Gemini] API error:', res.status, errBody)
     throw new GeminiError(msg, res.status, errBody)
   }
 
