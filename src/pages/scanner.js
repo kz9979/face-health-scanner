@@ -1154,6 +1154,8 @@ async function runDemoMode() {
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
 
+const _MALE_NAMES = ['david', 'daniel', 'mark', 'fred', 'james', 'aaron', 'gordon', 'lee', 'richard', 'thomas', 'paul', 'george', 'oliver', 'harry', 'rishi', 'arthur', 'tom', 'alex']
+
 function speak(text) {
   if (!window.speechSynthesis) return
   speechSynthesis.cancel()
@@ -1161,7 +1163,12 @@ function speak(text) {
   const lang   = getLang()
   const prefix = lang === 'bm' ? 'ms' : 'en'
   const voices = speechSynthesis.getVoices()
-  const voice  = voices.find(v => v.lang.toLowerCase().startsWith(prefix)) ?? null
+
+  const isMale = v => _MALE_NAMES.some(n => v.name.toLowerCase().includes(n))
+  // Prefer female (non-male) voice; fall back to any matching voice
+  const voice  = voices.find(v => v.lang.toLowerCase().startsWith(prefix) && !isMale(v))
+               ?? voices.find(v => v.lang.toLowerCase().startsWith(prefix))
+               ?? null
 
   // No Malay voice installed → skip TTS rather than mispronounce with an English voice
   if (lang === 'bm' && !voice) return

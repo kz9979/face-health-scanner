@@ -288,14 +288,19 @@ function renderModernSection(c) {
   const m = c.modern
   if (!m) return ''
 
+  const lang = getLang()
+  const conditionLabel = lang === 'bm' ? (m.condition_bm || m.condition) : m.condition
+
   const conditionBadge = `
     <div class="p-3 rounded-xl bg-blue-900/25 border border-blue-500/25">
-      <p class="text-xs text-[#E0B990] font-semibold">${m.condition}</p>
+      <p class="text-xs text-[#E0B990] font-semibold">${conditionLabel}</p>
     </div>
   `
 
-  if (c.id === 'moles' && m.checks) {
+  if (c.id === 'moles' && (m.checks || m.checks_bm)) {
     const letters = ['A', 'B', 'C', 'D', 'E']
+    const checks  = lang === 'bm' ? (m.checks_bm || m.checks) : (m.checks_en || m.checks)
+    const action  = lang === 'bm' ? (m.action || '') : (m.action_en || m.action || '')
     return `
       <div class="p-4 flex flex-col gap-3">
         <div class="flex items-center gap-2">
@@ -308,27 +313,31 @@ function renderModernSection(c) {
           ${letters.map(l => `
           <div class="flex gap-3 items-start p-3 rounded-xl bg-slate-900/60 border border-slate-700/40">
             <span class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">${l}</span>
-            <p class="text-xs text-slate-300 leading-relaxed pt-0.5">${m.checks[l]}</p>
+            <p class="text-xs text-slate-300 leading-relaxed pt-0.5">${checks[l]}</p>
           </div>`).join('')}
         </div>
         <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700/40">
           <p class="text-xs text-slate-500 font-medium mb-1">${t('action')}</p>
-          <p class="text-xs text-slate-300 leading-relaxed">${m.action}</p>
+          <p class="text-xs text-slate-300 leading-relaxed">${action}</p>
         </div>
       </div>
     `
   }
 
-  const causesHtml = (m.causes || []).map(x =>
+  const causesArr   = lang === 'bm' ? (m.causes    || []) : (m.causes_en    || m.causes    || [])
+  const symptomsArr = lang === 'bm' ? (m.symptoms  || []) : (m.symptoms_en  || m.symptoms  || [])
+  const actionText  = lang === 'bm' ? (m.action    || '') : (m.action_en    || m.action    || '')
+
+  const causesHtml = causesArr.map(x =>
     `<li class="flex gap-2 items-start"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0"></span><span class="text-slate-400 text-xs">${x}</span></li>`
   ).join('')
 
-  const symptomsHtml = (m.symptoms || []).map(x =>
+  const symptomsHtml = symptomsArr.map(x =>
     `<li class="flex gap-2 items-start"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span><span class="text-slate-400 text-xs">${x}</span></li>`
   ).join('')
 
-  const hasSymptoms = (m.symptoms || []).length > 0
-  const hasCauses   = (m.causes || []).length > 0
+  const hasSymptoms = symptomsArr.length > 0
+  const hasCauses   = causesArr.length > 0
 
   return `
     <div class="p-4 flex flex-col gap-3">
@@ -350,10 +359,10 @@ function renderModernSection(c) {
           <ul class="flex flex-col gap-1.5">${symptomsHtml}</ul>
         </div>` : ''}
       </div>` : ''}
-      ${m.action ? `
+      ${actionText ? `
       <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700/40">
         <p class="text-xs text-slate-500 font-medium mb-1">${t('action')}</p>
-        <p class="text-xs text-slate-300 leading-relaxed">${m.action}</p>
+        <p class="text-xs text-slate-300 leading-relaxed">${actionText}</p>
       </div>` : ''}
     </div>
   `
@@ -385,7 +394,10 @@ function renderTestsSection(c) {
 // ── Recommendations section ───────────────────────────────────────────────────
 
 function renderRecsSection(c, s) {
-  const recs = c.recommendations || []
+  const lang = getLang()
+  const recs = lang === 'bm'
+    ? (c.recommendations    || [])
+    : (c.recommendations_en || c.recommendations || [])
   if (!recs.length) return ''
   const act = ACTION[c.severity]
 
